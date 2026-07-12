@@ -17,7 +17,7 @@ export async function POST(request) {
 User profile:
 ${JSON.stringify(profile, null, 2)}
 
-Scores are 0-100 per module. Low = leverage gap.
+Scores are calibrated 0-92 per module. A score of 92 is the ceiling; 75+ means Holding, 55-74 Exposed, 35-54 Gap, and under 35 Critical. Most operators land in the 40s and 50s. Treat anything under 55 as a live problem worth naming.
 
 Two fields matter most:
 - twelve_month_destination: their declared win condition. Aim every priority and action at it. If it is "undefined destination", name that as the first problem — a tunnel with no exit is a hole.
@@ -28,7 +28,7 @@ Respond with ONLY valid JSON, no markdown fences, no preamble, exactly this shap
   "verdict": "one blunt sentence naming their core imbalance",
   "memo": ["4 short blunt diagnosis lines, each a standalone observation about their position"],
   "priorities": [
-    {"module": "one of: leverage|systems|strategy|building|ownership|network|economy|focus|forces", "diagnosis": "1-2 blunt sentences on why this is the gap", "actions": ["3 concrete next actions, each starting with a verb, each doable within 14 days"]}
+    {"module": "one of: leverage|systems|strategy|building|ownership|network|economy|focus|forces", "diagnosis": "1-2 blunt sentences on why this is the gap", "actions": ["3 concrete next actions, each starting with a verb, each doable within 14 days and aimed at their stated destination"]}
   ],
   "risks": ["2 hidden risks or bottlenecks they likely can't see, specific to this profile"]
 }

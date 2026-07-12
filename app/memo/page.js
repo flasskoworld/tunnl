@@ -1,7 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MODULES, ARCHETYPES, weakestModules } from "../../lib/engine";
+import {
+  MODULES,
+  ARCHETYPES,
+  boardAverage,
+  scoreBand,
+  weakestModules,
+} from "../../lib/engine";
 import { asciiBar } from "../../lib/ascii";
 
 export default function Memo() {
@@ -42,6 +48,7 @@ export default function Memo() {
 
   const { scores, archetype, memo, profile, aiEnhanced, date } = result;
   const weak = weakestModules(scores, 3);
+  const average = boardAverage(scores);
   const arch = ARCHETYPES[archetype];
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
 
@@ -119,20 +126,29 @@ export default function Memo() {
         <div className="eyebrow">Module scorecard</div>
         <div className="scorecard">
           {MODULES.map((m) => {
-            const isWeak = weak.includes(m.key);
+            const score = scores[m.key];
+            const band = scoreBand(score);
+            const flagged = band !== "Holding";
             return (
               <div key={m.key} className="score-row">
-                <span className="label" style={{ fontWeight: isWeak ? 500 : 400 }}>
+                <span className="label" style={{ fontWeight: flagged ? 500 : 400 }}>
                   {m.label}
                 </span>
-                <span className="bar" style={{ opacity: isWeak ? 1 : 0.75 }}>
-                  {asciiBar(scores[m.key])}
+                <span className="bar" style={{ opacity: flagged ? 1 : 0.75 }}>
+                  {asciiBar(score)}
                 </span>
-                <span className="val">{scores[m.key]}</span>
-                {isWeak && <span className="gap-chip">Gap</span>}
+                <span className="val">{score}</span>
+                <span className={`band-chip ${band.toLowerCase()}`}>{band}</span>
               </div>
             );
           })}
+          <div className="board-average">
+            <span>Board average</span>
+            <strong>{average}</strong>
+          </div>
+          <p className="score-note">
+            Calibrated against operators at scale, not against your peers. The board never shows a perfect position.
+          </p>
         </div>
 
         <div className="eyebrow">Field notes</div>

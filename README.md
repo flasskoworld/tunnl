@@ -9,6 +9,9 @@ Personal Economy, Tunnel Vision, Invisible Forces), classifies you as
 Owner / Operator / Builder / Stuck Optimizer, and generates a personalized
 operating memo — verdict, field notes, priority moves, hidden risks.
 
+Scores use a calibrated 0-92 scale benchmarked against operators at scale,
+with Holding, Exposed, Gap, and Critical bands.
+
 Design language: ultramarine ink (#2742C7) on paper (#FBF9F3), engraved
 editorial serif (Instrument Serif), IBM Plex Mono, ASCII as the digitized
 craft layer (the veil, the scorecard bars).
