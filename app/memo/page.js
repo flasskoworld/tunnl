@@ -16,6 +16,7 @@ export default function Memo() {
   const [missing, setMissing] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
   const [enhanceError, setEnhanceError] = useState("");
+  const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
     try {
@@ -25,6 +26,15 @@ export default function Memo() {
     } catch (e) {
       setMissing(true);
     }
+    fetch("/api/me")
+      .then((response) => response.json())
+      .then((data) => {
+        setUnlocked(Boolean(data.unlocked));
+        localStorage.setItem("tunnl-starter-unlocked", data.unlocked ? "true" : "false");
+      })
+      .catch(() => {
+        setUnlocked(localStorage.getItem("tunnl-starter-unlocked") === "true");
+      });
   }, []);
 
   if (missing) {
@@ -168,7 +178,7 @@ export default function Memo() {
         <div className="eyebrow">Where to point the tunnel</div>
         <div style={{ marginBottom: 40 }}>
           {memo.priorities.map((p, i) => {
-            const locked = i > 0; // Free tier: first deep dive open
+            const locked = i > 0 && !unlocked;
             const open = expanded === i && !locked;
             return (
               <div key={i} className={`priority${open ? " open" : ""}`}>
@@ -196,9 +206,9 @@ export default function Memo() {
                   </div>
                 )}
                 {locked && (
-                  <div className="locked-note">
-                    Full diagnosis + 14-day plan unlocks at Starter.
-                  </div>
+                  <Link href="/checkout" className="locked-note locked-link">
+                    Full diagnosis + 14-day plan unlocks at Starter — $49 →
+                  </Link>
                 )}
               </div>
             );
@@ -229,6 +239,21 @@ export default function Memo() {
             </div>
           ))}
         </div>
+
+        {unlocked ? (
+          <div className="memo-actions">
+            <Link href="/protocol" className="btn full">Open the 14-Day Protocol</Link>
+            <Link href="/vault" className="btn ghost full">Open the Vault</Link>
+            <Link href="/ledger" className="btn ghost full">View the Ledger</Link>
+          </div>
+        ) : (
+          <div className="memo-actions">
+            <Link href="/checkout" className="btn full">Commission the Protocol — $49</Link>
+            <Link href="/signin" className="signin-link">
+              Already commissioned on another device? Sign in
+            </Link>
+          </div>
+        )}
 
         <div style={{ maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
           <Link href="/diagnostic" className="btn ghost full">

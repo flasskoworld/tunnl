@@ -9,7 +9,7 @@ export default function EngravingHero() {
         <div className="stage">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/tunnl-arch-blue.png"
+            src="/tunnl-panorama-stairs-blue.png"
             alt="Engraved arch opening onto a temple — the tunnel"
             className="engraving"
           />

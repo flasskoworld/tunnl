@@ -50,11 +50,20 @@ h1.mark {
   padding: 14px;
   margin-bottom: 12px;
 }
-.stage { position: relative; overflow: hidden; }
+.stage {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--paper);
+}
 .engraving {
-  display: block; width: 100%; height: auto;
+  position: absolute; inset: 0;
+  display: block; width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 58%;
   animation: breathe 14s ease-in-out infinite alternate;
-  transform-origin: 50% 60%;
+  transform-origin: 50% 58%;
+  transition: transform 650ms ease, filter 650ms ease;
 }
 @keyframes breathe {
   from { transform: scale(1); }
@@ -71,12 +80,38 @@ h1.mark {
   opacity: 0.5;
   white-space: pre;
   overflow: hidden;
+  transition: opacity 650ms ease, transform 650ms ease;
 }
 .caption {
   display: flex; justify-content: space-between;
   font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--ink-soft); margin-bottom: 30px;
 }
+
+/* ── landing composition ── */
+.home-shell { align-items: flex-start; }
+.home-col { max-width: 1040px; padding: 28px 0 70px; }
+.home-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; padding: 14px 0 18px; }
+.home-title h1.mark { font-size: clamp(64px, 9vw, 96px); margin: 0; }
+.home-title .tagline { margin: 0 0 8px; text-align: right; }
+.home-visual { width: min(78%, 780px); margin-inline: auto; }
+.home-visual .frame { padding: 10px; margin-bottom: 8px; }
+.home-visual .stage { aspect-ratio: 16 / 9; }
+.home-visual .engraving { object-fit: contain; object-position: center; }
+.home-visual .caption { margin-bottom: 18px; }
+.home-lower { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 40px; }
+.home-lower .copy { max-width: 580px; }
+.home-cta { min-width: 260px; }
+.home-modules { margin-top: 54px; }
+.home-account { display: flex; align-items: center; gap: 18px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; }
+.home-account a { color: var(--ink); text-decoration: none; }
+.home-account a:hover { text-decoration: underline; }
+
+.home-visual:hover .engraving { animation: none; transform: scale(1.025); filter: contrast(1.06); }
+.portal-entering .engraving { animation: none; transform: scale(1.1); filter: contrast(1.18) brightness(0.76); }
+.portal-entering .veil { opacity: 0.86; transform: scale(1.16); }
+.portal-entering .home-col { animation: page-enter 650ms ease-in forwards; }
+@keyframes page-enter { to { opacity: 0.18; transform: scale(1.015); } }
 
 /* ── buttons ── */
 .btn {
@@ -163,6 +198,9 @@ h2.question {
 .action { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--ink-faint); font-size: 13px; line-height: 1.7; }
 .action .arrow { color: var(--ink); }
 .locked-note { padding: 0 20px 16px; font-size: 11px; color: var(--ink-soft); }
+.locked-link { display: block; text-decoration: underline; }
+.memo-actions { max-width: 340px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.signin-link { font-size: 11px; color: var(--ink-soft); text-align: center; text-decoration: underline; }
 .risk { display: flex; gap: 14px; background: var(--ink); color: var(--paper); padding: 16px 18px; margin-bottom: 10px; }
 .risk p { font-size: 13px; line-height: 1.75; }
 .ladder { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px; margin-bottom: 40px; }
@@ -183,4 +221,48 @@ h2.question {
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
+}
+
+@media (max-width: 520px) {
+  .stage { aspect-ratio: 4 / 3; }
+  .home-col { padding-top: 22px; }
+  .home-title { display: block; padding: 18px 0; }
+  .home-title h1.mark { font-size: 68px; }
+  .home-title .tagline { text-align: left; margin-top: 4px; font-size: 20px; }
+  .home-visual { width: 100%; }
+  .home-lower { grid-template-columns: 1fr; gap: 20px; }
+  .home-cta { min-width: 0; width: 100%; }
+}
+
+/* The Ledger — print-styled export */
+.ledger-page { max-width: 680px; margin: 0 auto; padding: 40px 32px 80px; font-family: var(--mono); color: var(--ink-deep); background: var(--paper); }
+.ledger-header { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); }
+.ledger-rule { height: 1px; background: var(--ink); margin: 10px 0 24px; }
+.ledger-h1 { font-family: var(--serif); color: var(--ink); font-size: 48px; line-height: 1; margin-bottom: 10px; }
+.ledger-sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 24px; max-width: 480px; line-height: 1.7; }
+.ledger-verdict { border: 1px solid var(--ink); background: var(--ink-wash); padding: 18px 20px; margin-bottom: 20px; }
+.ledger-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink); margin-bottom: 10px; }
+.ledger-verdict-text { font-family: var(--serif); font-style: italic; color: var(--ink); font-size: 19px; line-height: 1.4; }
+.ledger-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
+.ledger-table td { padding: 6px 8px; border-top: 1px solid var(--ink-faint); vertical-align: top; }
+.ledger-table td.mono { font-size: 10px; letter-spacing: 1px; color: var(--ink); }
+.ledger-table td.num { font-family: var(--serif); font-size: 15px; text-align: right; color: var(--ink); }
+.ledger-table td.band { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); text-align: right; }
+.ledger-avg-row td { border-top: 1px solid var(--ink); font-weight: 600; padding-top: 10px; }
+.ledger-notes { padding-left: 18px; font-size: 12px; line-height: 1.8; margin-bottom: 10px; }
+.ledger-notes li { margin-bottom: 6px; }
+.ledger-priority { margin-bottom: 20px; }
+.ledger-priority-title { font-family: var(--serif); color: var(--ink); font-size: 20px; margin-bottom: 6px; }
+.ledger-priority-diag { font-size: 12px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 8px; }
+.ledger-actions { padding-left: 18px; font-size: 12px; line-height: 1.8; }
+.ledger-actions li { margin-bottom: 4px; }
+.ledger-pagebreak { height: 1px; }
+.ledger-footer { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--ink); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+  .ledger-page { max-width: 100%; padding: 0.5in; }
+  .ledger-pagebreak { page-break-before: always; height: 0; }
+  .ledger-verdict, .ledger-priority { break-inside: avoid; }
 }

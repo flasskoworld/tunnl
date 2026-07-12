@@ -66,7 +66,21 @@ Builders, creators, and community leaders consume strategy content endlessly but
 
 ---
 
-### Starter — The Protocol · $49 one-time
+### Starter — The Protocol · $49 one-time · **BUILT (v2 — with accounts)**
+
+**Architecture:** checkout email creates a passwordless account
+(Postgres `users` + `purchases` tables, magic-link + session JWT via
+`jose`, no password ever stored). Paying signs the browser in
+immediately; Stripe's webhook independently marks the purchase paid
+and emails a sign-in message, which is how the same account reaches
+the Protocol/Vault/Ledger from a different device. Every sign-in email
+carries both a tappable link and a 6-digit code — no password option
+was added on purpose: a password path still needs email for recovery
+anyway, so it adds hashing, reset flows, and attack surface without
+removing the email dependency it's meant to avoid. `/api/me` is the
+single entitlement check every gated page calls — `localStorage`
+remains only as a fast local cache, never the source of truth.
+
 
 **Positioning:** a commissioned report, not a paywall unlock. Starter is a *product*; Builder is a *relationship*. One-time pricing avoids churn theater on a plan people consume once.
 

@@ -38,6 +38,18 @@ engine in `lib/engine.js`. A key enables the optional "Personalize with AI"
 action on the memo; questionnaire data is sent to Anthropic only when the user
 chooses that action.
 
+### Accounts and Starter checkout
+
+Passwordless sign-in uses Postgres, signed session cookies, and Resend. Copy
+`.env.example` to `.env.local`, configure `DATABASE_URL`, `AUTH_SECRET`,
+`RESEND_API_KEY`, and `APP_URL`, then run `schema.sql` against the database.
+Stripe checkout additionally requires `STRIPE_SECRET_KEY` and
+`STRIPE_WEBHOOK_SECRET`.
+
+Before production traffic, add per-email and per-IP throttling to the OTP
+request and verification routes. The current six-digit code flow is suitable
+for scaffold testing, but it is not rate-limited yet.
+
 ## Push to GitHub
 
 ```bash
@@ -60,6 +72,12 @@ app/
   page.js              intro — engraving hero + ASCII veil, module index
   diagnostic/page.js   15-question flow + deterministic scoring and reading
   memo/page.js         operating memo — scorecard, notes, priorities, risks
+  signin/page.js       passwordless email link and code sign-in
+  account/page.js      account and Starter entitlement status
+  checkout/page.js     Stripe Starter checkout
+  protocol/page.js     paid 14-day action plan
+  vault/page.js        paid worksheets
+  ledger/page.js       print-ready memo export
   api/memo/route.js    optional server-side Claude personalization
   globals.css          all design tokens + component styles
 components/
@@ -69,13 +87,13 @@ lib/
   engine.js            modules, questions, scoring, classify, fallbacks
   ascii.js             veil generator + block-character score bars
 public/
-  tunnl-arch-blue.png  the engraving, TUNNL ultramarine duotone
+  tunnl-panorama-stairs-blue.png  the landing engraving
 ```
 
 ## Roadmap (the ladder)
 
-- [ ] Free → Starter gate: auth (Clerk/NextAuth) + Stripe on locked priorities
-- [ ] Memo export — printed-ledger PDF/PNG, the shareable artifact
+- [x] Free → Starter gate: passwordless auth + Stripe on locked priorities
+- [x] Print-ready Ledger export
 - [ ] Re-diagnostic deltas — "Ownership +18 since March" (Builder tier retention)
 - [ ] Team/community analytics (Operator tier)
 
