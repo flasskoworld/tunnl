@@ -169,6 +169,8 @@ h2.question {
 .engine-option p { font-size: 12px; line-height: 1.65; max-width: 560px; }
 .engine-option .btn { width: fit-content; }
 .engine-option .btn:disabled { cursor: wait; opacity: 0.55; }
+.engine-action { display: grid; gap: 8px; justify-items: start; }
+.engine-action span { font-size: 9px; line-height: 1.5; color: var(--ink-soft); max-width: 360px; }
 .engine-error { color: var(--ink-deep); }
 .footer { display: flex; justify-content: space-between; padding: 14px 0; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); }
 .copy { font-size: 13px; line-height: 1.9; max-width: 470px; margin-bottom: 8px; }

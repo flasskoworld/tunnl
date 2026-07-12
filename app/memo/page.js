@@ -97,18 +97,21 @@ export default function Memo() {
         <div className="engine-option">
           <div>
             <div className="q-module">
-              {aiEnhanced ? "AI-personalized reading" : "Optional live reading"}
+              {aiEnhanced ? "Live reading complete" : "The deeper reading · Starter"}
             </div>
             <p className="soft">
               {aiEnhanced
-                ? "This edition was rewritten around your answers and destination."
-                : "Your reading is complete. You can optionally send your answers to Anthropic for a more tailored interpretation."}
+                ? "The board ran a second pass across your answers, tested your stated blocker against the scores, and sharpened the reading around your destination."
+                : "The scorecard shows where you stand. Starter runs a live second pass across every answer to expose contradictions, sharpen the verdict, and point the next moves at your twelve-month destination."}
             </p>
           </div>
           {!aiEnhanced && (
-            <button className="btn ghost" onClick={personalize} disabled={enhancing}>
-              {enhancing ? "Reading the board..." : "Personalize with AI"}
-            </button>
+            <div className="engine-action">
+              <button className="btn ghost" onClick={personalize} disabled={enhancing}>
+                {enhancing ? "Running the second pass..." : "Run the deeper analysis"}
+              </button>
+              <span>Your answers are processed by Anthropic only for this live reading.</span>
+            </div>
           )}
           {enhanceError && <p className="engine-error">{enhanceError}</p>}
         </div>
