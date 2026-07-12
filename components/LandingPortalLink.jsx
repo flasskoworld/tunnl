@@ -20,7 +20,7 @@ export default function LandingPortalLink() {
 
   return (
     <Link href="/diagnostic" className="btn home-cta" onClick={enter} aria-busy={entering}>
-      {entering ? "Opening your audit..." : "Get your free audit"}
+      {entering ? "Entering..." : "Enter The Tunnel"}
     </Link>
   );
 }
