@@ -1,0 +1,132 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import AsciiVeil from "../../components/AsciiVeil";
+import {
+  QUESTIONS,
+  ARCHETYPES,
+  computeScores,
+  classify,
+  weakestModules,
+  buildFallbackMemo,
+} from "../../lib/engine";
+import { asciiBar } from "../../lib/ascii";
+
+export default function Diagnostic() {
+  const router = useRouter();
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [context, setContext] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const answer = (opt) => {
+    const q = QUESTIONS[step];
+    let nextAnswers = answers;
+    if (q.context) {
+      setContext(opt.v);
+    } else {
+      nextAnswers = [...answers, { id: q.id, text: opt.t, w: opt.w }];
+      setAnswers(nextAnswers);
+    }
+    if (step + 1 < QUESTIONS.length) {
+      setStep(step + 1);
+    } else {
+      finish(nextAnswers);
+    }
+  };
+
+  const finish = async (finalAnswers) => {
+    setLoading(true);
+    const scores = computeScores(finalAnswers);
+    const archetype = classify(scores);
+    const weak = weakestModules(scores, 3);
+
+    const profile = {
+      building: context,
+      archetype: ARCHETYPES[archetype].name,
+      scores,
+      three_weakest_modules: weak,
+      answers: finalAnswers.map((a) => ({ q: a.id, chose: a.text })),
+    };
+
+    let memo;
+    let apiFailed = false;
+    try {
+      const res = await fetch("/api/memo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      if (!res.ok) throw new Error("engine unavailable");
+      memo = await res.json();
+      if (memo.error) throw new Error(memo.error);
+    } catch (e) {
+      apiFailed = true;
+      memo = buildFallbackMemo(archetype, weak);
+    }
+
+    try {
+      localStorage.setItem(
+        "tunnl-result",
+        JSON.stringify({
+          date: new Date().toISOString().slice(0, 10),
+          scores,
+          archetype,
+          memo,
+          apiFailed,
+        })
+      );
+    } catch (e) {}
+    router.push("/memo");
+  };
+
+  if (loading) {
+    return (
+      <main className="shell" style={{ alignItems: "center" }}>
+        <div style={{ textAlign: "center", maxWidth: 620 }}>
+          <div className="frame" style={{ padding: "16px 6px" }}>
+            <div className="stage" style={{ minHeight: 140 }}>
+              <AsciiVeil width={46} height={13} />
+            </div>
+          </div>
+          <div className="eyebrow" style={{ marginBottom: 10 }}>
+            Reading the board…
+          </div>
+          <div style={{ fontSize: 11 }} className="soft">
+            scoring modules · classifying position · drafting memo
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const q = QUESTIONS[step];
+  const pct = Math.round((step / QUESTIONS.length) * 100);
+
+  return (
+    <main className="shell">
+      <div className="col">
+        <div className="top">
+          <div className="eyebrow">TUNNL · Diagnostic</div>
+          <span className="num">
+            {String(step + 1).padStart(2, "0")}/{QUESTIONS.length}
+          </span>
+        </div>
+        <div className="progress">{asciiBar(pct, 40)}</div>
+
+        <div className="q-module">Module — {q.eyebrow}</div>
+        <h2 className="question">{q.q}</h2>
+
+        <div>
+          {q.options.map((opt, i) => (
+            <button key={i} className="option" onClick={() => answer(opt)}>
+              <span className="key">[{String.fromCharCode(97 + i)}]</span>
+              <span>{opt.t}</span>
+            </button>
+          ))}
+          <div className="rule" />
+        </div>
+      </div>
+    </main>
+  );
+}
