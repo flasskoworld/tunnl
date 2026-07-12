@@ -194,11 +194,18 @@ h2.question {
 .priority-head {
   width: 100%; text-align: left; background: transparent; border: none;
   padding: 18px 20px; display: flex; justify-content: space-between;
-  align-items: baseline; gap: 12px; color: var(--ink-deep); cursor: pointer;
+  align-items: baseline; gap: 12px; color: var(--ink-deep);
   font-family: var(--mono);
 }
 .priority-head .title { font-family: var(--serif); color: var(--ink); font-size: 24px; }
 .priority-head .state { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); flex-shrink: 0; }
+.day-open { border: 0; background: transparent; color: var(--ink); cursor: pointer; flex-shrink: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; padding: 6px 0; }
+.plan-checkbox { appearance: none; width: 20px; height: 20px; border: 1px solid var(--ink); border-radius: 0; background: transparent; cursor: pointer; flex-shrink: 0; margin: 0; position: relative; }
+.plan-checkbox:checked { background: var(--ink); }
+.plan-checkbox:checked::after { content: "✓"; color: var(--paper); font-family: var(--mono); font-size: 12px; position: absolute; inset: 0; display: grid; place-items: center; }
+.plan-checkbox:disabled { cursor: not-allowed; opacity: 0.32; }
+.plan-checkbox:focus-visible, .day-open:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.completion-message { border-top: 1px solid var(--ink-faint); color: var(--ink); font-size: 9px; line-height: 1.6; margin: 0 20px; padding: 10px 0; }
 .priority-body { padding: 0 20px 20px; }
 .priority-body .diag { font-size: 13px; line-height: 1.8; color: var(--ink-soft); margin-bottom: 14px; }
 .action { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--ink-faint); font-size: 13px; line-height: 1.7; }

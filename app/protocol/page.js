@@ -19,6 +19,8 @@ function ProtocolInner() {
   const [evidence, setEvidence] = useState({});
   const [checkpoint, setCheckpoint] = useState({ clearestSignal: "", friction: "", direction: "continue", revisedConstraint: "" });
   const [planProfile, setPlanProfile] = useState({});
+  const [isPreview, setIsPreview] = useState(false);
+  const [completionMessage, setCompletionMessage] = useState({});
 
   useEffect(() => {
     (async () => {
@@ -42,6 +44,7 @@ function ProtocolInner() {
         (params.get("preview") === "starter" ||
           localStorage.getItem("tunnl-dev-starter-preview") === "true");
       if (previewingStarter) localStorage.setItem("tunnl-dev-starter-preview", "true");
+      setIsPreview(previewingStarter);
       let unlocked = previewingStarter;
       let accountData = null;
       if (previewingStarter) {
@@ -97,14 +100,23 @@ function ProtocolInner() {
   const toggle = (day) => {
     if (day === 14) return;
     const planDay = days.find((item) => item.day === day);
-    if (planDay?.type === "action" && (!evidence[day]?.output?.trim() || !evidence[day]?.signal)) return;
-    if (planDay?.type === "checkpoint" && (!checkpoint.clearestSignal.trim() || !checkpoint.friction || !checkpoint.direction)) return;
+    if (planDay?.type === "action" && (!evidence[day]?.output?.trim() || !evidence[day]?.signal)) {
+      setOpenDay(day);
+      setCompletionMessage({ [day]: "Add what you produced and choose an outcome signal first." });
+      return;
+    }
+    if (planDay?.type === "checkpoint" && (!checkpoint.clearestSignal.trim() || !checkpoint.friction || !checkpoint.direction)) {
+      setOpenDay(day);
+      setCompletionMessage({ [day]: "Complete and save the midpoint review first." });
+      return;
+    }
     const next = { ...checked, [day]: !checked[day] };
     setChecked(next);
     try {
       localStorage.setItem("tunnl-protocol-checked", JSON.stringify(next));
     } catch (e) {}
     saveWorkspace({ protocol_checked: next });
+    setCompletionMessage({});
     if (next[day]) track("plan_day_completed", { day });
   };
 
@@ -249,34 +261,32 @@ function ProtocolInner() {
           {days.map((d) => {
             const isChecked = !!checked[d.day];
             const open = openDay === d.day;
-            const canComplete = d.day <= scheduledDay && (d.day === 1 || checked[d.day - 1]);
+            const onSchedule = isPreview || d.day <= scheduledDay;
+            const inSequence = d.day === 1 || checked[d.day - 1];
+            const canComplete = d.day < 14 && onSchedule && inSequence;
+            const canToggle = isChecked || canComplete;
             const kindLabel = { kickoff: "Kickoff", action: "Move", checkpoint: "Course Correction", integration: "Integration", close: "Close" }[d.type];
             return (
               <div id={`protocol-day-${d.day}`} key={d.day} className={`priority${open ? " open" : ""}`}>
-                <button
-                  className="priority-head"
-                  onClick={() => setOpenDay(open ? null : d.day)}
-                  style={{ gap: 14 }}
-                >
+                <div className="priority-head" style={{ gap: 14 }}>
                   <span style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                    <span
-                      onClick={(e) => { e.stopPropagation(); if (canComplete) toggle(d.day); }}
-                      style={{
-                        width: 20, height: 20, border: "1px solid var(--ink)",
-                        display: "inline-flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 12, flexShrink: 0, background: isChecked ? "var(--ink)" : "transparent",
-                        color: "var(--paper)", cursor: canComplete ? "pointer" : "default", opacity: canComplete ? 1 : 0.35,
-                      }}
-                    >
-                      {isChecked ? "✓" : ""}
-                    </span>
+                    <input
+                      className="plan-checkbox"
+                      type="checkbox"
+                      checked={isChecked}
+                      disabled={!canToggle}
+                      aria-label={`Mark Day ${d.day} complete`}
+                      title={d.day === 14 ? "Complete the Day 14 review to finish the sprint." : !onSchedule ? "This day opens on its scheduled date." : !inSequence ? "Complete the previous day first." : ""}
+                      onChange={() => toggle(d.day)}
+                    />
                     <span className="title" style={{ fontSize: 20 }}>
                       Day {d.day} — {kindLabel}
                     </span>
                     <span className="day-date">{dateForDay(d.day)}</span>
                   </span>
-                  <span className="state">{open ? "Close —" : "Open +"}</span>
-                </button>
+                  <button className="day-open" type="button" onClick={() => setOpenDay(open ? null : d.day)} aria-expanded={open}>{open ? "Close —" : "Open +"}</button>
+                </div>
+                {completionMessage[d.day] && <p className="completion-message">{completionMessage[d.day]}</p>}
                 {open && (
                   <div className="priority-body">
                     <p style={{ fontSize: 14, lineHeight: 1.8, fontFamily: "var(--serif)", color: "var(--ink)", marginBottom: 10 }}>
