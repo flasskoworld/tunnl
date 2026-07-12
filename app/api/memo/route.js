@@ -3,6 +3,13 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json(
+      { error: "AI personalization is not configured." },
+      { status: 503 }
+    );
+  }
+
   const profile = await request.json();
 
   const prompt = `You are the diagnostic engine inside TUNNL ("The Tunnel"), a strategy operating system for builders, creators, and community leaders. The core metaphor: focus is a tunnel — the engine tells the user where to point it. Voice: blunt, staccato, second person, street-economics register. No fluff, no hedging, no emojis.
@@ -30,6 +37,7 @@ Priorities must be exactly the 3 modules with the lowest scores, ordered weakest
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: AbortSignal.timeout(15000),
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY,

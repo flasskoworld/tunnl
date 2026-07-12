@@ -57,21 +57,7 @@ export default function Diagnostic() {
       answers: finalAnswers.map((a) => ({ q: a.id, chose: a.text })),
     };
 
-    let memo;
-    let apiFailed = false;
-    try {
-      const res = await fetch("/api/memo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
-      if (!res.ok) throw new Error("engine unavailable");
-      memo = await res.json();
-      if (memo.error) throw new Error(memo.error);
-    } catch (e) {
-      apiFailed = true;
-      memo = buildFallbackMemo(archetype, weak);
-    }
+    const memo = buildFallbackMemo(archetype, weak, profile);
 
     try {
       localStorage.setItem(
@@ -80,8 +66,9 @@ export default function Diagnostic() {
           date: new Date().toISOString().slice(0, 10),
           scores,
           archetype,
+          profile,
           memo,
-          apiFailed,
+          aiEnhanced: false,
         })
       );
     } catch (e) {}
@@ -129,7 +116,7 @@ export default function Diagnostic() {
             Reading the board…
           </div>
           <div style={{ fontSize: 11 }} className="soft">
-            scoring modules · classifying position · drafting memo
+            scoring modules · classifying position · drafting reading
           </div>
         </div>
       </main>

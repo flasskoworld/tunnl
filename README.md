@@ -30,8 +30,10 @@ npm run dev                  # http://localhost:3000
 Get an API key at https://console.anthropic.com — API docs:
 https://docs.claude.com/en/api/overview
 
-Without a key the app still works: the diagnostic falls back to the
-baseline diagnosis library in `lib/engine.js`.
+The diagnostic always creates a complete local reading with the deterministic
+engine in `lib/engine.js`. A key enables the optional "Personalize with AI"
+action on the memo; questionnaire data is sent to Anthropic only when the user
+chooses that action.
 
 ## Push to GitHub
 
@@ -53,9 +55,9 @@ in project environment variables, ship.
 ```
 app/
   page.js              intro — engraving hero + ASCII veil, module index
-  diagnostic/page.js   15-question flow, scoring, calls /api/memo
+  diagnostic/page.js   15-question flow + deterministic scoring and reading
   memo/page.js         operating memo — scorecard, notes, priorities, risks
-  api/memo/route.js    server-side Claude call (x-api-key from env)
+  api/memo/route.js    optional server-side Claude personalization
   globals.css          all design tokens + component styles
 components/
   EngravingHero.jsx    fig. 01 — the tunnel

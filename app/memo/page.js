@@ -8,6 +8,8 @@ export default function Memo() {
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(0);
   const [missing, setMissing] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const [enhanceError, setEnhanceError] = useState("");
 
   useEffect(() => {
     try {
@@ -38,10 +40,32 @@ export default function Memo() {
 
   if (!result) return <main className="shell" />;
 
-  const { scores, archetype, memo, apiFailed, date } = result;
+  const { scores, archetype, memo, profile, aiEnhanced, date } = result;
   const weak = weakestModules(scores, 3);
   const arch = ARCHETYPES[archetype];
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
+
+  const personalize = async () => {
+    setEnhancing(true);
+    setEnhanceError("");
+    try {
+      const res = await fetch("/api/memo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      const personalizedMemo = await res.json();
+      if (!res.ok || personalizedMemo.error) throw new Error("engine unavailable");
+
+      const nextResult = { ...result, memo: personalizedMemo, aiEnhanced: true };
+      localStorage.setItem("tunnl-result", JSON.stringify(nextResult));
+      setResult(nextResult);
+    } catch (e) {
+      setEnhanceError("The live engine is unavailable. Your original reading is unchanged.");
+    } finally {
+      setEnhancing(false);
+    }
+  };
 
   return (
     <main className="shell">
@@ -68,6 +92,25 @@ export default function Memo() {
             The verdict
           </div>
           <p>“{memo.verdict}”</p>
+        </div>
+
+        <div className="engine-option">
+          <div>
+            <div className="q-module">
+              {aiEnhanced ? "AI-personalized reading" : "Optional live reading"}
+            </div>
+            <p className="soft">
+              {aiEnhanced
+                ? "This edition was rewritten around your answers and destination."
+                : "Your reading is complete. You can optionally send your answers to Anthropic for a more tailored interpretation."}
+            </p>
+          </div>
+          {!aiEnhanced && (
+            <button className="btn ghost" onClick={personalize} disabled={enhancing}>
+              {enhancing ? "Reading the board..." : "Personalize with AI"}
+            </button>
+          )}
+          {enhanceError && <p className="engine-error">{enhanceError}</p>}
         </div>
 
         <div className="eyebrow">Module scorecard</div>
@@ -152,13 +195,6 @@ export default function Memo() {
             </div>
           ))}
         </div>
-
-        {apiFailed && (
-          <div style={{ fontSize: 11, marginBottom: 30 }} className="soft">
-            Live engine unavailable — showing baseline diagnosis. Re-run for the
-            personalized memo.
-          </div>
-        )}
 
         <div className="eyebrow">The ladder</div>
         <div className="ladder">
