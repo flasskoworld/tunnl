@@ -12,6 +12,10 @@ ${JSON.stringify(profile, null, 2)}
 
 Scores are 0-100 per module. Low = leverage gap.
 
+Two fields matter most:
+- twelve_month_destination: their declared win condition. Aim every priority and action at it. If it is "undefined destination", name that as the first problem — a tunnel with no exit is a hole.
+- self_diagnosed_blocker: what THEY believe is holding them back. Compare it against the actual weakest modules. If belief and data diverge, open the verdict with the confrontation (e.g. "You said discipline. The board says distribution."). If they align, confirm it and sharpen it. If "Honestly, not sure", tell them plainly what it is.
+
 Respond with ONLY valid JSON, no markdown fences, no preamble, exactly this shape:
 {
   "verdict": "one blunt sentence naming their core imbalance",

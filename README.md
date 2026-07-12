@@ -1,7 +1,7 @@
 # TUNNL — The Tunnel OS
 
 > An operating system for people who build.
-> Seventeen questions. Nine modules. One operating memo.
+> Fifteen questions. Nine modules. One operating memo.
 
 An SE HQ instrument. The engine reads your position across nine modules
 (Leverage, Systems, Strategy, Building, Ownership, Network Effects,
@@ -53,7 +53,7 @@ in project environment variables, ship.
 ```
 app/
   page.js              intro — engraving hero + ASCII veil, module index
-  diagnostic/page.js   17-question flow, scoring, calls /api/memo
+  diagnostic/page.js   15-question flow, scoring, calls /api/memo
   memo/page.js         operating memo — scorecard, notes, priorities, risks
   api/memo/route.js    server-side Claude call (x-api-key from env)
   globals.css          all design tokens + component styles

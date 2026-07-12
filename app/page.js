@@ -19,7 +19,7 @@ export default function Home() {
 
         <EngravingHero />
 
-        <p className="copy">Seventeen questions. Nine modules. One operating memo.</p>
+        <p className="copy">Fifteen questions. Nine modules. One operating memo.</p>
         <p className="copy soft" style={{ marginBottom: 32 }}>
           The engine reads your position, maps your leverage gaps, and tells
           you where to point the tunnel. Not theory — your situation.

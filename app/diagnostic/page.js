@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import AsciiVeil from "../../components/AsciiVeil";
 import {
   QUESTIONS,
+  BLOCKER_QUESTION,
   ARCHETYPES,
   computeScores,
   classify,
@@ -17,13 +18,16 @@ export default function Diagnostic() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [context, setContext] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [destination, setDestination] = useState("");
+  const [phase, setPhase] = useState("quiz"); // quiz | blocker | loading
+  const [pendingAnswers, setPendingAnswers] = useState(null);
 
   const answer = (opt) => {
     const q = QUESTIONS[step];
     let nextAnswers = answers;
     if (q.context) {
-      setContext(opt.v);
+      if (q.field === "destination") setDestination(opt.v);
+      else setContext(opt.v);
     } else {
       nextAnswers = [...answers, { id: q.id, text: opt.t, w: opt.w }];
       setAnswers(nextAnswers);
@@ -31,18 +35,22 @@ export default function Diagnostic() {
     if (step + 1 < QUESTIONS.length) {
       setStep(step + 1);
     } else {
-      finish(nextAnswers);
+      // Hold the answers; the blocker screen fires the engine.
+      setPendingAnswers(nextAnswers);
+      setPhase("blocker");
     }
   };
 
-  const finish = async (finalAnswers) => {
-    setLoading(true);
+  const finish = async (finalAnswers, blocker) => {
+    setPhase("loading");
     const scores = computeScores(finalAnswers);
     const archetype = classify(scores);
     const weak = weakestModules(scores, 3);
 
     const profile = {
       building: context,
+      twelve_month_destination: destination,
+      self_diagnosed_blocker: blocker,
       archetype: ARCHETYPES[archetype].name,
       scores,
       three_weakest_modules: weak,
@@ -80,7 +88,35 @@ export default function Diagnostic() {
     router.push("/memo");
   };
 
-  if (loading) {
+  if (phase === "blocker") {
+    return (
+      <main className="shell">
+        <div className="col">
+          <div className="top">
+            <div className="eyebrow">TUNNL · Diagnostic</div>
+            <span className="num">before the reading</span>
+          </div>
+          <div className="q-module">The engine is warming up</div>
+          <h2 className="question">{BLOCKER_QUESTION.q}</h2>
+          <div>
+            {BLOCKER_QUESTION.options.map((opt, i) => (
+              <button
+                key={i}
+                className="option"
+                onClick={() => finish(pendingAnswers, opt)}
+              >
+                <span className="key">[{String.fromCharCode(97 + i)}]</span>
+                <span>{opt}</span>
+              </button>
+            ))}
+            <div className="rule" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (phase === "loading") {
     return (
       <main className="shell" style={{ alignItems: "center" }}>
         <div style={{ textAlign: "center", maxWidth: 620 }}>
