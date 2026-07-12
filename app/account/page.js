@@ -1,9 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { buildProtocol, protocolProgress } from "../../lib/protocol";
 
 export default function Account() {
   const [me, setMe] = useState(null);
+  const [result, setResult] = useState(null);
+  const [checked, setChecked] = useState({});
 
   useEffect(() => {
     fetch("/api/me")
@@ -14,6 +17,12 @@ export default function Account() {
           localStorage.setItem("tunnl-starter-unlocked", data.unlocked ? "true" : "false");
         } catch (e) {}
       });
+    try {
+      const saved = localStorage.getItem("tunnl-result");
+      const progress = localStorage.getItem("tunnl-protocol-checked");
+      setResult(saved ? JSON.parse(saved) : null);
+      setChecked(progress ? JSON.parse(progress) : {});
+    } catch (e) {}
   }, []);
 
   const signOut = async () => {
@@ -39,36 +48,59 @@ export default function Account() {
     );
   }
 
+  const days = result?.memo
+    ? buildProtocol(result.memo, { twelve_month_destination: result.profile?.twelve_month_destination })
+    : [];
+  const progress = protocolProgress(checked, days);
+  const nextDay = days.find((day) => !checked[day.day]);
+
   return (
     <main className="shell">
       <div className="col">
         <div className="top">
-          <div className="eyebrow">TUNNL · Account</div>
+          <div className="eyebrow">TUNNL · Starter Home</div>
+          <span className="num">{me.email}</span>
         </div>
         <div className="rule" />
         <div style={{ padding: "26px 0 8px" }}>
-          <div className="q-module">Signed in as</div>
-          <h1 className="serif" style={{ fontSize: "clamp(28px, 6vw, 40px)", lineHeight: 1.2, marginBottom: 14, wordBreak: "break-all" }}>
-            {me.email}
+          <div className="q-module">Your operating system</div>
+          <h1 className="serif" style={{ fontSize: "clamp(40px, 9vw, 60px)", lineHeight: 1, marginBottom: 14 }}>
+            {me.unlocked ? "Continue the work." : "Your reading is ready."}
           </h1>
           <p className="copy soft">
             {me.unlocked ? "The Protocol is commissioned. Full access." : "Free tier — the Protocol isn't commissioned yet."}
           </p>
         </div>
 
-        <div style={{ maxWidth: 340, display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
-          {me.unlocked ? (
-            <>
-              <Link href="/protocol" className="btn full">Open the 14-Day Protocol</Link>
-              <Link href="/vault" className="btn ghost full">Open the Vault</Link>
-              <Link href="/ledger" className="btn ghost full">View the Ledger</Link>
-            </>
-          ) : (
-            <Link href="/checkout" className="btn full">Commission the Protocol — $49</Link>
-          )}
-          <Link href="/memo" className="btn ghost full">Back to the memo</Link>
-          <button className="btn ghost full" onClick={signOut}>Sign out</button>
-        </div>
+        {me.unlocked ? (
+          <>
+            {nextDay ? (
+              <section className="account-resume">
+                <div className="today-meta"><span>Up next · Day {nextDay.day}</span><span>{nextDay.minutes} min</span></div>
+                <h2>{nextDay.title}</h2>
+                <p>{nextDay.detail}</p>
+                <Link href="/protocol" className="btn">Continue the Protocol</Link>
+                <div className="account-progress">{progress.done} of {progress.total} moves complete</div>
+              </section>
+            ) : result ? (
+              <section className="account-resume"><h2>Protocol complete.</h2><p>Your Ledger now holds the full record of the work.</p><Link href="/ledger" className="btn">Open the Ledger</Link></section>
+            ) : (
+              <section className="account-resume"><h2>Bring your reading into Starter.</h2><p>Run the diagnostic on this device to generate your Protocol and priority tools.</p><Link href="/diagnostic" className="btn">Run the diagnostic</Link></section>
+            )}
+
+            <div className="eyebrow">Starter ecosystem</div>
+            <nav className="ecosystem-grid" aria-label="Starter ecosystem">
+              <Link href="/protocol"><span>01</span><strong>Protocol</strong><p>Your sequenced 14-day implementation path.</p></Link>
+              <Link href="/vault"><span>02</span><strong>Vault</strong><p>Worksheets for the decisions behind the work.</p></Link>
+              <Link href="/memo"><span>03</span><strong>Reading</strong><p>Your diagnosis, strengths, and three priorities.</p></Link>
+              <Link href="/ledger"><span>04</span><strong>Ledger</strong><p>Your numbered, print-ready record.</p></Link>
+            </nav>
+          </>
+        ) : (
+          <div className="memo-actions"><Link href="/checkout" className="btn full">Commission the Protocol — $49</Link><Link href="/memo" className="btn ghost full">Back to the memo</Link></div>
+        )}
+
+        <button className="account-signout" onClick={signOut}>Sign out</button>
       </div>
     </main>
   );

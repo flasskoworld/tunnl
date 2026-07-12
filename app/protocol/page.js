@@ -10,6 +10,7 @@ function ProtocolInner() {
   const [result, setResult] = useState(null);
   const [days, setDays] = useState([]);
   const [checked, setChecked] = useState({});
+  const [notes, setNotes] = useState({});
   const [openDay, setOpenDay] = useState(null);
 
   useEffect(() => {
@@ -50,11 +51,13 @@ function ProtocolInner() {
         setResult(saved);
         if (saved?.memo) {
           const built = buildProtocol(saved.memo, {
-            twelve_month_destination: saved.destination,
+            twelve_month_destination: saved.profile?.twelve_month_destination,
           });
           setDays(built);
           const rawChecked = localStorage.getItem("tunnl-protocol-checked");
           setChecked(rawChecked ? JSON.parse(rawChecked) : {});
+          const rawNotes = localStorage.getItem("tunnl-protocol-notes");
+          setNotes(rawNotes ? JSON.parse(rawNotes) : {});
         }
       } catch (e) {}
       setStatus("ready");
@@ -67,6 +70,21 @@ function ProtocolInner() {
     try {
       localStorage.setItem("tunnl-protocol-checked", JSON.stringify(next));
     } catch (e) {}
+  };
+
+  const updateNote = (day, value) => {
+    const next = { ...notes, [day]: value };
+    setNotes(next);
+    try {
+      localStorage.setItem("tunnl-protocol-notes", JSON.stringify(next));
+    } catch (e) {}
+  };
+
+  const openToday = (day) => {
+    setOpenDay(day);
+    window.setTimeout(() => {
+      document.getElementById(`protocol-day-${day}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   };
 
   if (status === "checking") {
@@ -94,6 +112,7 @@ function ProtocolInner() {
   }
 
   const progress = protocolProgress(checked, days);
+  const nextDay = days.find((day) => !checked[day.day]) || days[days.length - 1];
 
   return (
     <main className="shell">
@@ -114,11 +133,24 @@ function ProtocolInner() {
           </p>
         </div>
 
-        <div className="scorecard" style={{ marginBottom: 30 }}>
-          <div className="board-avg">
-            <span>Progress</span>
-            <span className="avg-num">{progress.done}/{progress.total}</span>
+        {nextDay && (
+          <section className="today-move">
+            <div className="today-meta">
+              <span>Next move · Day {nextDay.day}</span>
+              <span>{nextDay.minutes} min</span>
+            </div>
+            <h2>{nextDay.title}</h2>
+            <p>{nextDay.detail}</p>
+            <button className="btn" onClick={() => openToday(nextDay.day)}>Open today&apos;s move</button>
+          </section>
+        )}
+
+        <div className="protocol-progress">
+          <div className="protocol-progress-copy">
+            <span>Protocol progress</span>
+            <strong>{progress.done} of {progress.total}</strong>
           </div>
+          <div className="protocol-progress-track"><span style={{ width: `${progress.pct}%` }} /></div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 40 }}>
@@ -127,7 +159,7 @@ function ProtocolInner() {
             const open = openDay === d.day;
             const kindLabel = { kickoff: "Kickoff", action: "Move", integration: "Integration", close: "Close" }[d.type];
             return (
-              <div key={d.day} className={`priority${open ? " open" : ""}`}>
+              <div id={`protocol-day-${d.day}`} key={d.day} className={`priority${open ? " open" : ""}`}>
                 <button
                   className="priority-head"
                   onClick={() => setOpenDay(open ? null : d.day)}
@@ -157,6 +189,21 @@ function ProtocolInner() {
                       {d.title}
                     </p>
                     <p className="diag" style={{ marginBottom: 0 }}>{d.detail}</p>
+                    <div className="day-specs">
+                      <div><span>Time</span><strong>{d.minutes} minutes</strong></div>
+                      <div><span>Why now</span><p>{d.why}</p></div>
+                      <div><span>Done when</span><p>{d.doneWhen}</p></div>
+                      <div><span>Notice</span><p>{d.reflection}</p></div>
+                    </div>
+                    <label className="day-reflection">
+                      <span>Field note</span>
+                      <textarea
+                        rows={3}
+                        value={notes[d.day] || ""}
+                        onChange={(event) => updateNote(d.day, event.target.value)}
+                        placeholder="Record what changed, resisted, or became clear."
+                      />
+                    </label>
                   </div>
                 )}
               </div>
@@ -165,6 +212,7 @@ function ProtocolInner() {
         </div>
 
         <div style={{ maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
+          <Link href="/account" className="btn full">Starter home</Link>
           <Link href="/vault" className="btn ghost full">Open the Vault</Link>
           <Link href="/ledger" className="btn ghost full">View the Ledger</Link>
           <Link href="/memo" className="btn ghost full">Back to the memo</Link>

@@ -151,7 +151,11 @@ export default function Ledger() {
                 <td style={{ width: 90, textTransform: "uppercase", fontSize: 9, letterSpacing: "0.1em" }}>
                   {d.type}
                 </td>
-                <td>{d.title}</td>
+                <td className="ledger-day">
+                  <strong>{d.title}</strong>
+                  <span>{d.minutes} min · {d.detail}</span>
+                  <em>Done when: {d.doneWhen}</em>
+                </td>
               </tr>
             ))}
           </tbody>
