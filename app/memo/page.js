@@ -10,6 +10,18 @@ import {
 } from "../../lib/engine";
 import { asciiBar } from "../../lib/ascii";
 
+const STRENGTH_COPY = {
+  leverage: "You already look for force multipliers instead of treating effort as the only input.",
+  systems: "You have repeatable structure to build on. The next gain comes from tightening it, not starting over.",
+  strategy: "You can see the board beyond the next task. That perspective is an asset when it becomes a choice.",
+  building: "You have evidence of motion. Shipping is already part of how you operate.",
+  ownership: "You are thinking beyond access toward assets, control, and durable upside.",
+  network: "You understand that distribution and relationships can compound the work.",
+  economy: "You have a usable relationship with money, runway, and the economics of your decisions.",
+  focus: "You can hold a direction long enough for the work to accumulate.",
+  forces: "You notice incentives and hidden constraints that other builders often miss.",
+};
+
 export default function Memo() {
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(0);
@@ -58,6 +70,9 @@ export default function Memo() {
 
   const { scores, archetype, memo, profile, aiEnhanced, date } = result;
   const weak = weakestModules(scores, 3);
+  const strengths = [...MODULES]
+    .sort((a, b) => scores[b.key] - scores[a.key])
+    .slice(0, 2);
   const average = boardAverage(scores);
   const arch = ARCHETYPES[archetype];
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
@@ -124,10 +139,13 @@ export default function Memo() {
           </div>
           {!aiEnhanced && (
             <div className="engine-action">
-              <button className="btn ghost" onClick={personalize} disabled={enhancing}>
-                {enhancing ? "Running the second pass..." : "Run the deeper analysis"}
-              </button>
-              <span>Your answers are processed by Anthropic only for this live reading.</span>
+              {unlocked ? (
+                <button className="btn ghost" onClick={personalize} disabled={enhancing}>
+                  {enhancing ? "Running the second pass..." : "Run the deeper analysis"}
+                </button>
+              ) : (
+                <Link href="/checkout" className="btn ghost">Unlock the deeper analysis</Link>
+              )}
             </div>
           )}
           {enhanceError && <p className="engine-error">{enhanceError}</p>}
@@ -160,6 +178,23 @@ export default function Memo() {
             Calibrated against operators at scale, not against your peers. The board never shows a perfect position.
           </p>
         </div>
+
+        <div className="eyebrow">What is already working</div>
+        <div className="strength-grid">
+          {strengths.map((strength, index) => (
+            <div className="strength-signal" key={strength.key}>
+              <div className="strength-topline">
+                <span>Signal {String(index + 1).padStart(2, "0")}</span>
+                <strong>{scores[strength.key]}</strong>
+              </div>
+              <h2>{strength.label}</h2>
+              <p>{STRENGTH_COPY[strength.key]}</p>
+            </div>
+          ))}
+        </div>
+        <p className="strength-note">
+          These are relative strengths from your answers, not compliments added after the fact. Build the next move on them.
+        </p>
 
         <div className="eyebrow">Field notes</div>
         <div style={{ marginBottom: 40 }}>
@@ -215,6 +250,23 @@ export default function Memo() {
           })}
         </div>
 
+        {!unlocked && (
+          <section className="starter-offer">
+            <div className="starter-kicker">Starter · One-time · $49</div>
+            <h2>Knowing the gap is free. Closing it is the Protocol.</h2>
+            <p className="starter-lede">
+              Turn this reading into a focused 14-day sequence built around your three lowest-leverage points and your stated destination.
+            </p>
+            <div className="starter-outcomes">
+              <div><span>01</span><strong>Deeper reading</strong><p>A live second pass across every answer, contradiction, and priority.</p></div>
+              <div><span>02</span><strong>14-Day Protocol</strong><p>One sequenced move per day, with the full three-priority diagnosis.</p></div>
+              <div><span>03</span><strong>Tools that stay yours</strong><p>Nine Vault worksheets and a print-ready Ledger for the work ahead.</p></div>
+            </div>
+            <Link href="/checkout" className="btn starter-cta">Build my Protocol · $49 one time</Link>
+            <div className="starter-assurance">No subscription. Your reading stays available after purchase.</div>
+          </section>
+        )}
+
         <div className="eyebrow">Hidden risks</div>
         <div style={{ marginBottom: 46 }}>
           {memo.risks.map((r, i) => (
@@ -225,15 +277,15 @@ export default function Memo() {
           ))}
         </div>
 
-        <div className="eyebrow">The ladder</div>
+        <div className="eyebrow">Where TUNNL is going</div>
         <div className="ladder">
           {[
-            { name: "Free", desc: "Scorecard + one deep dive", lead: true },
-            { name: "Starter", desc: "Full plan + templates" },
-            { name: "Builder", desc: "AI coaching + dashboards" },
-            { name: "Operator", desc: "Team analytics + playbooks" },
+            { name: "Starter", desc: "$49 once · The Protocol, Vault, and Ledger", lead: true },
+            { name: "Builder", desc: "Coming soon · ongoing guidance and progress intelligence", soon: true },
+            { name: "Sovereign", desc: "Coming later · the board for teams and communities", soon: true },
           ].map((t) => (
             <div key={t.name} className={`tier${t.lead ? " lead" : ""}`}>
+              {t.soon && <div className="tier-status">Coming soon</div>}
               <div className="name">{t.name}</div>
               <div className="desc">{t.desc}</div>
             </div>
