@@ -10,6 +10,12 @@ export default function Vault() {
   const [values, setValues] = useState({});
 
   useEffect(() => {
+    const previewingStarter =
+      process.env.NODE_ENV === "development" &&
+      new URLSearchParams(window.location.search).get("preview") === "starter";
+    if (previewingStarter) {
+      setUnlocked(true);
+    } else {
     fetch("/api/me")
       .then((r) => r.json())
       .then((data) => {
@@ -19,6 +25,7 @@ export default function Vault() {
       .catch(() => {
         try { setUnlocked(localStorage.getItem("tunnl-starter-unlocked") === "true"); } catch (e) { setUnlocked(false); }
       });
+    }
     try {
       const raw = localStorage.getItem("tunnl-vault-values");
       if (raw) setValues(JSON.parse(raw));

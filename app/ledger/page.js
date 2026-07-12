@@ -12,6 +12,14 @@ export default function Ledger() {
   const [editionNo, setEditionNo] = useState("0001");
 
   useEffect(() => {
+    const previewingStarter =
+      process.env.NODE_ENV === "development" &&
+      new URLSearchParams(window.location.search).get("preview") === "starter";
+    if (previewingStarter) {
+      setUnlocked(true);
+      loadLedgerData();
+      return;
+    }
     fetch("/api/me")
       .then((r) => r.json())
       .then((data) => {

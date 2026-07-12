@@ -9,6 +9,13 @@ export default function Account() {
   const [checked, setChecked] = useState({});
 
   useEffect(() => {
+    const previewingStarter =
+      process.env.NODE_ENV === "development" &&
+      new URLSearchParams(window.location.search).get("preview") === "starter";
+
+    if (previewingStarter) {
+      setMe({ signedIn: true, unlocked: true, email: "starter.preview@tunnl.local" });
+    } else {
     fetch("/api/me")
       .then((r) => r.json())
       .then((data) => {
@@ -17,6 +24,7 @@ export default function Account() {
           localStorage.setItem("tunnl-starter-unlocked", data.unlocked ? "true" : "false");
         } catch (e) {}
       });
+    }
     try {
       const saved = localStorage.getItem("tunnl-result");
       const progress = localStorage.getItem("tunnl-protocol-checked");
@@ -79,21 +87,21 @@ export default function Account() {
                 <div className="today-meta"><span>Up next · Day {nextDay.day}</span><span>{nextDay.minutes} min</span></div>
                 <h2>{nextDay.title}</h2>
                 <p>{nextDay.detail}</p>
-                <Link href="/protocol" className="btn">Continue the Protocol</Link>
+                <Link href="/protocol?preview=starter" className="btn">Continue the Protocol</Link>
                 <div className="account-progress">{progress.done} of {progress.total} moves complete</div>
               </section>
             ) : result ? (
-              <section className="account-resume"><h2>Protocol complete.</h2><p>Your Ledger now holds the full record of the work.</p><Link href="/ledger" className="btn">Open the Ledger</Link></section>
+              <section className="account-resume"><h2>Protocol complete.</h2><p>Your Ledger now holds the full record of the work.</p><Link href="/ledger?preview=starter" className="btn">Open the Ledger</Link></section>
             ) : (
               <section className="account-resume"><h2>Bring your reading into Starter.</h2><p>Run the diagnostic on this device to generate your Protocol and priority tools.</p><Link href="/diagnostic" className="btn">Run the diagnostic</Link></section>
             )}
 
             <div className="eyebrow">Starter ecosystem</div>
             <nav className="ecosystem-grid" aria-label="Starter ecosystem">
-              <Link href="/protocol"><span>01</span><strong>Protocol</strong><p>Your sequenced 14-day implementation path.</p></Link>
-              <Link href="/vault"><span>02</span><strong>Vault</strong><p>Worksheets for the decisions behind the work.</p></Link>
+              <Link href="/protocol?preview=starter"><span>01</span><strong>Protocol</strong><p>Your sequenced 14-day implementation path.</p></Link>
+              <Link href="/vault?preview=starter"><span>02</span><strong>Vault</strong><p>Worksheets for the decisions behind the work.</p></Link>
               <Link href="/memo"><span>03</span><strong>Reading</strong><p>Your diagnosis, strengths, and three priorities.</p></Link>
-              <Link href="/ledger"><span>04</span><strong>Ledger</strong><p>Your numbered, print-ready record.</p></Link>
+              <Link href="/ledger?preview=starter"><span>04</span><strong>Ledger</strong><p>Your numbered, print-ready record.</p></Link>
             </nav>
           </>
         ) : (

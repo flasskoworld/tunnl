@@ -30,14 +30,18 @@ function ProtocolInner() {
 
       // Server session is the source of truth — not just localStorage,
       // so the same account unlocks on any device once signed in.
-      let unlocked = false;
-      try {
-        const meRes = await fetch("/api/me");
-        const me = await meRes.json();
-        unlocked = !!me.unlocked;
-        try { localStorage.setItem("tunnl-starter-unlocked", unlocked ? "true" : "false"); } catch (e) {}
-      } catch (e) {
-        try { unlocked = localStorage.getItem("tunnl-starter-unlocked") === "true"; } catch (e2) {}
+      const previewingStarter =
+        process.env.NODE_ENV === "development" && params.get("preview") === "starter";
+      let unlocked = previewingStarter;
+      if (!previewingStarter) {
+        try {
+          const meRes = await fetch("/api/me");
+          const me = await meRes.json();
+          unlocked = !!me.unlocked;
+          try { localStorage.setItem("tunnl-starter-unlocked", unlocked ? "true" : "false"); } catch (e) {}
+        } catch (e) {
+          try { unlocked = localStorage.getItem("tunnl-starter-unlocked") === "true"; } catch (e2) {}
+        }
       }
 
       if (!unlocked) {
