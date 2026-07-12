@@ -11,9 +11,11 @@ export default function Account() {
   useEffect(() => {
     const previewingStarter =
       process.env.NODE_ENV === "development" &&
-      new URLSearchParams(window.location.search).get("preview") === "starter";
+      (new URLSearchParams(window.location.search).get("preview") === "starter" ||
+        localStorage.getItem("tunnl-dev-starter-preview") === "true");
 
     if (previewingStarter) {
+      localStorage.setItem("tunnl-dev-starter-preview", "true");
       setMe({ signedIn: true, unlocked: true, email: "starter.preview@tunnl.local" });
     } else {
     fetch("/api/me")
@@ -37,6 +39,7 @@ export default function Account() {
     await fetch("/api/auth/logout", { method: "POST" });
     try {
       localStorage.removeItem("tunnl-starter-unlocked");
+      localStorage.removeItem("tunnl-dev-starter-preview");
     } catch (e) {}
     window.location.href = "/";
   };

@@ -12,8 +12,10 @@ export default function Vault() {
   useEffect(() => {
     const previewingStarter =
       process.env.NODE_ENV === "development" &&
-      new URLSearchParams(window.location.search).get("preview") === "starter";
+      (new URLSearchParams(window.location.search).get("preview") === "starter" ||
+        localStorage.getItem("tunnl-dev-starter-preview") === "true");
     if (previewingStarter) {
+      localStorage.setItem("tunnl-dev-starter-preview", "true");
       setUnlocked(true);
     } else {
     fetch("/api/me")

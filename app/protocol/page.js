@@ -31,7 +31,10 @@ function ProtocolInner() {
       // Server session is the source of truth — not just localStorage,
       // so the same account unlocks on any device once signed in.
       const previewingStarter =
-        process.env.NODE_ENV === "development" && params.get("preview") === "starter";
+        process.env.NODE_ENV === "development" &&
+        (params.get("preview") === "starter" ||
+          localStorage.getItem("tunnl-dev-starter-preview") === "true");
+      if (previewingStarter) localStorage.setItem("tunnl-dev-starter-preview", "true");
       let unlocked = previewingStarter;
       if (!previewingStarter) {
         try {
@@ -200,12 +203,12 @@ function ProtocolInner() {
                       <div><span>Notice</span><p>{d.reflection}</p></div>
                     </div>
                     <label className="day-reflection">
-                      <span>Field note</span>
+                      <span>What changed?</span>
                       <textarea
                         rows={3}
                         value={notes[d.day] || ""}
                         onChange={(event) => updateNote(d.day, event.target.value)}
-                        placeholder="Record what changed, resisted, or became clear."
+                        placeholder="Write down what changed, what felt difficult, or what you learned."
                       />
                     </label>
                   </div>

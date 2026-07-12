@@ -38,6 +38,13 @@ export default function Memo() {
     } catch (e) {
       setMissing(true);
     }
+    const previewingStarter =
+      process.env.NODE_ENV === "development" &&
+      localStorage.getItem("tunnl-dev-starter-preview") === "true";
+    if (previewingStarter) {
+      setUnlocked(true);
+      return;
+    }
     fetch("/api/me")
       .then((response) => response.json())
       .then((data) => {
