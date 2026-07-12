@@ -5,6 +5,7 @@ import { MODULES, scoreBand, boardAverage, weakestModules, ARCHETYPES } from "..
 import { buildProtocol } from "../../lib/protocol";
 import { asciiBar } from "../../lib/ascii";
 import { loadAccountWorkspace } from "../../lib/clientData";
+import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
 
 export default function Ledger() {
   const [unlocked, setUnlocked] = useState(null);
@@ -43,10 +44,10 @@ export default function Ledger() {
     try {
       const raw = localStorage.getItem("tunnl-result");
       const saved = accountData?.readings?.[0]?.result || (raw ? JSON.parse(raw) : null);
-      setWorkspace(accountData?.workspace || null);
+      setWorkspace(accountData?.workspace ? { ...accountData.workspace, benchmarks: accountData.benchmarks || [] } : null);
       setReadings(accountData?.readings || (saved ? [{ result: saved }] : []));
       setResult(saved);
-      if (saved?.memo) setDays(buildProtocol(saved.memo, { ...saved.profile, ...(accountData?.workspace?.setup || {}) }));
+      if (saved?.memo) setDays(buildProtocol(saved.memo, { ...saved.profile, ...(accountData?.workspace?.setup || {}) }, accountData?.workspace?.course_correction || {}));
       const seq = localStorage.getItem("tunnl-edition-seq") || "1";
       setEditionNo(String(accountData?.readings?.length || seq).padStart(4, "0"));
     } catch (e) {}
@@ -80,6 +81,10 @@ export default function Ledger() {
   const review = workspace?.completion_review || {};
   const completedCount = Object.values(workspace?.protocol_checked || {}).filter(Boolean).length;
   const reflectionEntries = Object.entries(workspace?.protocol_notes || {}).filter(([, value]) => String(value).trim());
+  const evidenceEntries = Object.entries(workspace?.protocol_evidence || {}).filter(([, value]) => value?.output);
+  const movementCount = evidenceEntries.filter(([, value]) => ["strong", "some"].includes(value.signal)).length;
+  const checkpoint = workspace?.course_correction || {};
+  const benchmarks = workspace?.benchmarks || [];
   const hasFollowUp = readings.length > 1;
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
 
@@ -106,8 +111,11 @@ export default function Ledger() {
         <div className="sprint-summary">
           <div><span>Starting average</span><strong>{boardAverage(baseline.scores)}</strong></div>
           <div><span>Follow-up average</span><strong>{hasFollowUp ? boardAverage(latest.scores) : "—"}</strong></div>
-          <div><span>Moves completed</span><strong>{completedCount}/14</strong></div>
+          <div><span>Evidence that moved</span><strong>{movementCount}/{evidenceEntries.length || "—"}</strong></div>
         </div>
+        <div className="ledger-label">The Tunnl Method · Version 1.0</div>
+        <div className="method-report">{TUNNL_METHOD.map((stage, index) => <div key={stage.key}><span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong><p>{stage.description}</p></div>)}</div>
+        {checkpoint.clearestSignal && <><div className="ledger-label" style={{ marginTop: 28 }}>Day 7 Course Correction</div><div className="sprint-review"><div><span>Clearest signal</span><p>{checkpoint.clearestSignal}</p></div><div><span>Decision</span><p>{checkpoint.direction === "change" ? "Change course" : checkpoint.direction === "narrow" ? "Narrow the target" : "Continue"}{checkpoint.revisedConstraint ? ` — ${checkpoint.revisedConstraint}` : ""}</p></div></div></>}
         {(review.strongestResult || review.unresolved || review.nextCommitment) && (
           <div className="sprint-review">
             <div><span>What changed</span><p>{review.strongestResult}</p></div>
@@ -140,6 +148,13 @@ export default function Ledger() {
             </ol>
           </>
         )}
+
+        {evidenceEntries.length > 0 && (
+          <><div className="ledger-label" style={{ marginTop: 28 }}>Evidence Record</div><ol className="ledger-notes">{evidenceEntries.map(([day, entry]) => <li key={day}><strong>Day {day} · {OUTCOME_SIGNALS.find((signal) => signal.value === entry.signal)?.label || "Recorded"}:</strong> {entry.output}</li>)}</ol></>
+        )}
+
+        <div className="ledger-label" style={{ marginTop: 28 }}>Learning Benchmark</div>
+        <p className="ledger-sub">{benchmarks.length ? "Benchmarks compare this sprint with anonymized outcomes from at least ten completed uses of the same move." : "Tunnl is building its first validated benchmark set. Rates appear only after at least ten people complete the same move, so early activity is never presented as proof."}</p>
 
         <div className="ledger-verdict">
           <div className="ledger-label">The Verdict</div>

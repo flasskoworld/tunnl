@@ -55,10 +55,34 @@ CREATE TABLE IF NOT EXISTS starter_workspaces (
   protocol_start_date DATE,
   protocol_checked JSONB NOT NULL DEFAULT '{}'::jsonb,
   protocol_notes JSONB NOT NULL DEFAULT '{}'::jsonb,
+  protocol_evidence JSONB NOT NULL DEFAULT '{}'::jsonb,
+  course_correction JSONB NOT NULL DEFAULT '{}'::jsonb,
   vault_values JSONB NOT NULL DEFAULT '{}'::jsonb,
   completion_review JSONB NOT NULL DEFAULT '{}'::jsonb,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE starter_workspaces ADD COLUMN IF NOT EXISTS protocol_evidence JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE starter_workspaces ADD COLUMN IF NOT EXISTS course_correction JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+CREATE TABLE IF NOT EXISTS intervention_outcomes (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sprint_start_date DATE NOT NULL,
+  method_version TEXT NOT NULL,
+  intervention_key TEXT NOT NULL,
+  module TEXT,
+  plan_day INTEGER NOT NULL CHECK (plan_day BETWEEN 1 AND 14),
+  outcome_signal TEXT NOT NULL CHECK (outcome_signal IN ('strong', 'some', 'none', 'blocked')),
+  evidence_type TEXT,
+  evidence_length INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, sprint_start_date, intervention_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_intervention_benchmarks
+  ON intervention_outcomes(method_version, intervention_key, outcome_signal);
 
 CREATE TABLE IF NOT EXISTS product_events (
   id BIGSERIAL PRIMARY KEY,

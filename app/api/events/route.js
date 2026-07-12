@@ -9,6 +9,7 @@ const ALLOWED_EVENTS = new Set([
   "plan_started",
   "plan_day_completed",
   "sprint_completed",
+  "course_correction_completed",
 ]);
 
 export async function POST(request) {

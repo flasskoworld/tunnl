@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { buildProtocol, protocolProgress } from "../../lib/protocol";
 import { loadAccountWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
+import { TUNNL_METHOD } from "../../lib/methodology";
 
 export default function Account() {
   const [me, setMe] = useState(null);
@@ -177,6 +178,12 @@ export default function Account() {
               <Link href="/memo"><span>03</span><strong>Reading</strong><p>Your diagnosis, strengths, and three priorities.</p></Link>
               <Link href="/ledger?preview=starter"><span>04</span><strong>Sprint Report</strong><p>Your starting point, completed work, and what changed.</p></Link>
             </nav>
+            <section className="method-home">
+              <div className="q-module">How Tunnl works</div>
+              <h2>One method. A clearer record of progress.</h2>
+              <div className="method-strip">{TUNNL_METHOD.map((stage, index) => <div key={stage.key}><span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong></div>)}</div>
+              <p>Every sprint follows the same five stages, while the priorities, moves, and midpoint adjustment respond to your work.</p>
+            </section>
           </>
         ) : (
           <div className="memo-actions"><Link href="/checkout" className="btn full">Start my 14-Day Plan — $49</Link><Link href="/memo" className="btn ghost full">Back to the reading</Link></div>

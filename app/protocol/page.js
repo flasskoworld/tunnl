@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { buildProtocol, protocolProgress } from "../../lib/protocol";
 import { loadAccountWorkspace, saveWorkspace, track } from "../../lib/clientData";
+import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
 
 function ProtocolInner() {
   const params = useSearchParams();
@@ -15,6 +16,9 @@ function ProtocolInner() {
   const [openDay, setOpenDay] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [review, setReview] = useState({ strongestResult: "", unresolved: "", nextCommitment: "" });
+  const [evidence, setEvidence] = useState({});
+  const [checkpoint, setCheckpoint] = useState({ clearestSignal: "", friction: "", direction: "continue", revisedConstraint: "" });
+  const [planProfile, setPlanProfile] = useState({});
 
   useEffect(() => {
     (async () => {
@@ -70,10 +74,15 @@ function ProtocolInner() {
         setResult(saved);
         if (saved?.memo) {
           const savedSetup = accountData?.workspace?.setup || {};
+          const combinedProfile = { ...saved.profile, ...savedSetup };
+          setPlanProfile(combinedProfile);
           const savedStart = accountData?.workspace?.protocol_start_date || new Date().toISOString().slice(0, 10);
           setStartDate(savedStart);
           setReview(accountData?.workspace?.completion_review || { strongestResult: "", unresolved: "", nextCommitment: "" });
-          const built = buildProtocol(saved.memo, { ...saved.profile, ...savedSetup });
+          const savedCheckpoint = accountData?.workspace?.course_correction || {};
+          setCheckpoint((current) => ({ ...current, ...savedCheckpoint }));
+          setEvidence(accountData?.workspace?.protocol_evidence || {});
+          const built = buildProtocol(saved.memo, combinedProfile, savedCheckpoint);
           setDays(built);
           const rawChecked = localStorage.getItem("tunnl-protocol-checked");
           setChecked(accountData?.workspace?.protocol_checked || (rawChecked ? JSON.parse(rawChecked) : {}));
@@ -87,6 +96,9 @@ function ProtocolInner() {
 
   const toggle = (day) => {
     if (day === 14) return;
+    const planDay = days.find((item) => item.day === day);
+    if (planDay?.type === "action" && (!evidence[day]?.output?.trim() || !evidence[day]?.signal)) return;
+    if (planDay?.type === "checkpoint" && (!checkpoint.clearestSignal.trim() || !checkpoint.friction || !checkpoint.direction)) return;
     const next = { ...checked, [day]: !checked[day] };
     setChecked(next);
     try {
@@ -115,6 +127,30 @@ function ProtocolInner() {
   };
 
   const persistNotes = () => saveWorkspace({ protocol_notes: notes });
+
+  const updateEvidence = (day, field, value) => {
+    const planDay = days.find((item) => item.day === day);
+    setEvidence((current) => ({
+      ...current,
+      [day]: {
+        ...(current[day] || {}),
+        [field]: value,
+        module: planDay?.module,
+        interventionId: planDay?.interventionId,
+        methodVersion: planDay?.methodVersion,
+      },
+    }));
+  };
+
+  const persistEvidence = (next = evidence) => saveWorkspace({ protocol_evidence: next });
+
+  const saveCheckpoint = async (event) => {
+    event.preventDefault();
+    if (!checkpoint.clearestSignal.trim() || !checkpoint.friction || !checkpoint.direction) return;
+    if (!(await saveWorkspace({ course_correction: checkpoint }))) return;
+    setDays(buildProtocol(result.memo, planProfile, checkpoint));
+    track("course_correction_completed", { direction: checkpoint.direction, friction: checkpoint.friction });
+  };
 
   const openToday = (day) => {
     setOpenDay(day);
@@ -205,12 +241,16 @@ function ProtocolInner() {
           <div className="protocol-progress-track"><span style={{ width: `${progress.pct}%` }} /></div>
         </div>
 
+        <div className="method-strip" aria-label="The Tunnl Method">
+          {TUNNL_METHOD.map((stage, index) => <div key={stage.key}><span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong></div>)}
+        </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 40 }}>
           {days.map((d) => {
             const isChecked = !!checked[d.day];
             const open = openDay === d.day;
             const canComplete = d.day <= scheduledDay && (d.day === 1 || checked[d.day - 1]);
-            const kindLabel = { kickoff: "Kickoff", action: "Move", integration: "Integration", close: "Close" }[d.type];
+            const kindLabel = { kickoff: "Kickoff", action: "Move", checkpoint: "Course Correction", integration: "Integration", close: "Close" }[d.type];
             return (
               <div id={`protocol-day-${d.day}`} key={d.day} className={`priority${open ? " open" : ""}`}>
                 <button
@@ -250,7 +290,35 @@ function ProtocolInner() {
                       <div><span>Done when</span><p>{d.doneWhen}</p></div>
                       <div><span>Notice</span><p>{d.reflection}</p></div>
                     </div>
-                    <label className="day-reflection">
+                    {d.type === "action" && (
+                      <div className="evidence-capture">
+                        <div className="q-module">Evidence of movement</div>
+                        <label>
+                          What did you produce or learn?
+                          <textarea required rows={3} value={evidence[d.day]?.output || ""} onChange={(event) => updateEvidence(d.day, "output", event.target.value)} onBlur={() => persistEvidence()} placeholder="A shipped page, customer response, decision, number, or rejected assumption." />
+                        </label>
+                        <label>
+                          What kind of evidence is it?
+                          <select value={evidence[d.day]?.type || "artifact"} onChange={(event) => { updateEvidence(d.day, "type", event.target.value); }} onBlur={() => persistEvidence()}>
+                            <option value="artifact">Something shipped</option><option value="customer">Customer signal</option><option value="decision">Decision made</option><option value="metric">Measured result</option><option value="learning">Assumption tested</option>
+                          </select>
+                        </label>
+                        <fieldset><legend>Did it create movement?</legend><div className="signal-options">{OUTCOME_SIGNALS.map((signal) => <button type="button" className={evidence[d.day]?.signal === signal.value ? "selected" : ""} key={signal.value} onClick={() => { const next = { ...evidence, [d.day]: { ...(evidence[d.day] || {}), signal: signal.value, type: evidence[d.day]?.type || "artifact", module: d.module, interventionId: d.interventionId, methodVersion: d.methodVersion } }; setEvidence(next); persistEvidence(next); }}>{signal.label}</button>)}</div></fieldset>
+                        <p className="evidence-help">Add an output and signal before marking this move complete.</p>
+                      </div>
+                    )}
+                    {d.type === "checkpoint" && (
+                      <form className="course-correction" onSubmit={saveCheckpoint}>
+                        <div className="q-module">Midpoint review</div>
+                        <h3>Shape the second half around what you know now.</h3>
+                        <label>What is the clearest signal so far?<textarea required rows={3} value={checkpoint.clearestSignal} onChange={(event) => setCheckpoint({ ...checkpoint, clearestSignal: event.target.value })} placeholder="What did a person, number, or shipped result reveal?" /></label>
+                        <label>What created the most friction?<select required value={checkpoint.friction} onChange={(event) => setCheckpoint({ ...checkpoint, friction: event.target.value })}><option value="">Choose one</option><option value="scope">The scope was too large</option><option value="time">I did not protect the time</option><option value="clarity">The target was unclear</option><option value="audience">I need stronger audience evidence</option><option value="execution">Execution was harder than expected</option><option value="none">No major friction</option></select></label>
+                        <fieldset><legend>What should happen next?</legend><div className="direction-options"><button type="button" className={checkpoint.direction === "continue" ? "selected" : ""} onClick={() => setCheckpoint({ ...checkpoint, direction: "continue" })}><strong>Continue</strong><span>The signal supports the plan.</span></button><button type="button" className={checkpoint.direction === "narrow" ? "selected" : ""} onClick={() => setCheckpoint({ ...checkpoint, direction: "narrow" })}><strong>Narrow</strong><span>Make the target smaller.</span></button><button type="button" className={checkpoint.direction === "change" ? "selected" : ""} onClick={() => setCheckpoint({ ...checkpoint, direction: "change" })}><strong>Change course</strong><span>The evidence points elsewhere.</span></button></div></fieldset>
+                        {checkpoint.direction === "change" && <label>What is the revised constraint?<input required value={checkpoint.revisedConstraint} onChange={(event) => setCheckpoint({ ...checkpoint, revisedConstraint: event.target.value })} placeholder="The more accurate problem to solve next" /></label>}
+                        <button className="btn" type="submit">Update the second half</button>
+                      </form>
+                    )}
+                    {d.type !== "checkpoint" && <label className="day-reflection">
                       <span>What changed?</span>
                       <textarea
                         rows={3}
@@ -259,7 +327,7 @@ function ProtocolInner() {
                         onBlur={persistNotes}
                         placeholder="Write down what changed, what felt difficult, or what you learned."
                       />
-                    </label>
+                    </label>}
                     {d.day === 14 && (
                       <form className="completion-review" onSubmit={submitReview}>
                         <div className="q-module">Complete your sprint</div>

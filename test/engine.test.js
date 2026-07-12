@@ -10,6 +10,7 @@ import {
   weakestModules,
 } from "../lib/engine.js";
 import { buildProtocol, protocolProgress } from "../lib/protocol.js";
+import { courseCorrectionMode, interventionKey, METHOD_VERSION, TUNNL_METHOD } from "../lib/methodology.js";
 
 const scoredQuestions = QUESTIONS.filter((question) => !question.context);
 
@@ -67,4 +68,24 @@ test("the Plan respects a smaller weekly time budget", () => {
   const standard = buildProtocol(memo, { weeklyCapacity: "4 hours" });
   assert.ok(compact[1].minutes < standard[1].minutes);
   assert.ok(compact[1].minutes >= 10);
+});
+
+test("Day 7 adapts the second half without changing the 14-day shape", () => {
+  const memo = buildFallbackMemo("BUILDER", ["building", "focus", "strategy"], {});
+  const days = buildProtocol(memo, { focusProject: "a creator toolkit" }, {
+    direction: "change",
+    revisedConstraint: "the offer is unclear",
+  });
+  assert.equal(days.length, 14);
+  assert.equal(days[6].type, "checkpoint");
+  assert.equal(days[6].title, "Course Correction");
+  assert.match(days[7].detail, /offer is unclear/);
+  assert.equal(days[7].interventionId, interventionKey(8));
+});
+
+test("the Tunnl Method is versioned and resolves correction modes", () => {
+  assert.equal(METHOD_VERSION, "1.0");
+  assert.deepEqual(TUNNL_METHOD.map((stage) => stage.key), ["diagnose", "focus", "test", "adjust", "prove"]);
+  assert.equal(courseCorrectionMode({ friction: "scope" }), "narrow");
+  assert.equal(courseCorrectionMode({ direction: "change" }), "change");
 });
