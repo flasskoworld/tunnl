@@ -29,10 +29,10 @@ export default function Home() {
 
         <div className="home-lower">
           <div>
-            <p className="copy">Fifteen questions. Nine modules. One operating memo.</p>
+            <p className="copy">Find what&apos;s slowing your work down.</p>
             <p className="copy soft">
-              The engine reads your position, maps your leverage gaps, and tells
-              you where to point the tunnel. Not theory — your situation.
+              Answer 15 focused questions and get a clear reading of your
+              strengths, constraints, and best next move.
             </p>
           </div>
           <LandingPortalLink />
