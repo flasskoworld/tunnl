@@ -9,6 +9,7 @@ import {
   weakestModules,
 } from "../../lib/engine";
 import { asciiBar } from "../../lib/ascii";
+import { buildProtocol } from "../../lib/protocol";
 
 const STRENGTH_COPY = {
   leverage: "You already look for force multipliers instead of treating effort as the only input.",
@@ -79,6 +80,7 @@ export default function Memo() {
   const average = boardAverage(scores);
   const arch = ARCHETYPES[archetype];
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
+  const starterPreview = buildProtocol(memo, result.profile).slice(0, 3);
 
   return (
     <main className="shell">
@@ -211,8 +213,12 @@ export default function Memo() {
             <div className="starter-kicker">Starter · One-time · $49</div>
             <h2>Your reading found the constraint. Starter helps you move it.</h2>
             <p className="starter-lede">
-              Turn this reading into a focused 14-day sequence built around your three lowest-leverage points and your stated destination.
+              Turn this reading into a focused 14-day sequence built around your three priority constraints and your stated destination.
             </p>
+            <div className="starter-preview">
+              <div className="starter-preview-label">Your first three days</div>
+              {starterPreview.map((day) => <div className="starter-preview-day" key={day.day}><span>{String(day.day).padStart(2, "0")}</span><div><strong>{day.title}</strong><p>{day.detail}</p><em>{day.minutes} minutes</em></div></div>)}
+            </div>
             <div className="starter-outcomes">
               <div><span>01</span><strong>Your 14-Day Plan</strong><p>One focused move per day, shaped around your three priority constraints.</p></div>
               <div><span>02</span><strong>Decision Tools</strong><p>Focused worksheets for the choices behind the work.</p></div>

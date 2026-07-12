@@ -7,7 +7,6 @@ export default function Checkout() {
   const [result, setResult] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [email, setEmail] = useState("");
-  const [ack, setAck] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [canceled, setCanceled] = useState(false);
@@ -93,7 +92,7 @@ export default function Checkout() {
           </div>
         )}
 
-        {/* Exactly what unlocks — required transparency before a final-sale purchase */}
+        {/* Keep the purchase concrete and easy to review before checkout. */}
         <div className="eyebrow" style={{ marginTop: 34 }}>Exactly what unlocks</div>
         <div className="scorecard" style={{ marginBottom: 30 }}>
           <div className="note" style={{ padding: "14px 2px" }}>
@@ -149,31 +148,6 @@ export default function Checkout() {
           }}
         />
 
-        <label
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-start",
-            fontSize: 12.5,
-            lineHeight: 1.6,
-            color: "var(--ink-soft)",
-            marginBottom: 28,
-            cursor: "pointer",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={ack}
-            onChange={(e) => setAck(e.target.checked)}
-            style={{ marginTop: 3, accentColor: "var(--ink)" }}
-          />
-          <span>
-            I understand this is a final sale. Digital goods, delivered
-            immediately on payment — no refunds. I've reviewed exactly what
-            unlocks above.
-          </span>
-        </label>
-
         {error && (
           <div className="risk" style={{ marginBottom: 20 }}>
             <p>{error}</p>
@@ -183,9 +157,9 @@ export default function Checkout() {
         <div style={{ maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
           <button
             className="btn full"
-            disabled={!ack || loading}
+            disabled={loading}
             onClick={buy}
-            style={{ opacity: !ack || loading ? 0.4 : 1, cursor: !ack || loading ? "default" : "pointer" }}
+            style={{ opacity: loading ? 0.4 : 1, cursor: loading ? "default" : "pointer" }}
           >
             {loading ? "Opening checkout…" : "Start my 14-Day Plan — $49"}
           </button>

@@ -3,6 +3,7 @@ import { getSession } from "../../../lib/auth";
 import { recordProductEvent } from "../../../lib/db";
 
 const ALLOWED_EVENTS = new Set([
+  "diagnostic_started",
   "diagnostic_completed",
   "checkout_started",
   "purchase_completed",

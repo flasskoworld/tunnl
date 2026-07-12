@@ -39,7 +39,7 @@ export async function POST(request) {
             product_data: {
               name: "TUNNL — Starter",
               description:
-                "Your 14-Day Plan, Decision Tools, and Sprint Report. One-time. Final sale.",
+                "Your 14-Day Plan, Decision Tools, and Sprint Report. One-time purchase.",
             },
           },
           quantity: 1,

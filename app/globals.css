@@ -290,6 +290,22 @@ h2.question {
 .starter-kicker { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.72; margin-bottom: 18px; }
 .starter-offer h2 { font-family: var(--serif); font-size: clamp(30px, 6vw, 44px); font-weight: 400; line-height: 1.06; max-width: 560px; margin-bottom: 16px; }
 .starter-lede { font-size: 12px; line-height: 1.75; max-width: 520px; opacity: 0.78; margin-bottom: 28px; }
+.starter-preview { border-top: 1px solid rgba(251, 249, 243, 0.35); margin-bottom: 28px; }
+.starter-preview-label { font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.6; padding: 14px 0 6px; }
+.starter-preview-day { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; padding: 13px 0; border-bottom: 1px solid rgba(251, 249, 243, 0.2); }
+.starter-preview-day > span { font-family: var(--serif); font-size: 19px; opacity: 0.6; }
+.starter-preview-day strong { display: block; font-family: var(--serif); font-size: 17px; font-weight: 400; margin-bottom: 4px; }
+.starter-preview-day p { font-size: 10px; line-height: 1.55; opacity: 0.7; }
+.starter-preview-day em { display: block; font-size: 8px; font-style: normal; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; margin-top: 5px; }
+.diagnostic-back { border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; font-family: var(--mono); font-size: 10px; margin-top: 16px; padding: 6px 0; }
+.option.selected { background: var(--ink-wash); }
+.diagnostic-review-title { font-size: clamp(40px, 9vw, 60px); line-height: 1; margin-bottom: 14px; }
+.diagnostic-review-list { border-top: 1px solid var(--ink); margin: 18px 0 24px; }
+.review-answer { width: 100%; display: grid; grid-template-columns: 145px minmax(0, 1fr) auto; gap: 14px; align-items: baseline; border: 0; border-bottom: 1px solid var(--ink-faint); background: transparent; color: var(--ink-deep); cursor: pointer; font-family: var(--mono); padding: 13px 0; text-align: left; }
+.review-answer span, .review-answer em { color: var(--ink-soft); font-size: 8px; font-style: normal; letter-spacing: 0.1em; text-transform: uppercase; }
+.review-answer strong { font-size: 10px; font-weight: 400; line-height: 1.5; }
+.model-review { border-top: 1px solid var(--ink); }
+.review-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .starter-outcomes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid rgba(251, 249, 243, 0.35); margin-bottom: 28px; }
 .starter-outcomes > div { padding: 18px 18px 4px 0; }
 .starter-outcomes span { display: block; font-size: 9px; letter-spacing: 0.16em; opacity: 0.55; margin-bottom: 10px; }
@@ -330,6 +346,8 @@ h2.question {
   .sprint-summary { grid-template-columns: 1fr; }
   .sprint-summary > div { border-right: 0; border-bottom: 1px solid var(--ink); }
   .sprint-summary > div:last-child { border-bottom: 0; }
+  .review-answer { grid-template-columns: 1fr auto; }
+  .review-answer span { grid-column: 1 / -1; }
 }
 
 /* The Ledger — print-styled export */

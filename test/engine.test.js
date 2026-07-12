@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   MODULES,
   QUESTIONS,
+  MODEL_BRANCHES,
+  UNIVERSAL_QUESTIONS,
+  FOLLOW_UPS,
   buildFallbackMemo,
   classify,
   computeScores,
@@ -88,4 +91,30 @@ test("the Tunnl Method is versioned and resolves correction modes", () => {
   assert.deepEqual(TUNNL_METHOD.map((stage) => stage.key), ["diagnose", "focus", "test", "adjust", "prove"]);
   assert.equal(courseCorrectionMode({ friction: "scope" }), "narrow");
   assert.equal(courseCorrectionMode({ direction: "change" }), "change");
+});
+
+test("each business model produces a 15-question adaptive path", () => {
+  Object.entries(MODEL_BRANCHES).forEach(([model, branch]) => {
+    assert.equal(UNIVERSAL_QUESTIONS.length, 5);
+    assert.equal(branch.length, 7, `${model} should have seven model questions`);
+    const base = [...UNIVERSAL_QUESTIONS, ...branch];
+    const answers = base.map((question) => ({ id: question.id, text: question.options[0].t, w: question.options[0].w }));
+    const weak = weakestModules(computeScores(answers), 3);
+    const full = [...base, ...weak.map((key) => FOLLOW_UPS[key])];
+    assert.equal(full.length, 15);
+    assert.equal(new Set(full.map((question) => question.id)).size, 15);
+  });
+});
+
+test("the reading combines model, stage, evidence, and constraint context", () => {
+  const memo = buildFallbackMemo("BUILDER", ["strategy", "building", "focus"], {
+    business_model: "service",
+    stage: "early revenue",
+    recentEvidence: "market signal",
+    self_diagnosed_blocker: "Audience",
+    twelve_month_destination: "paying product",
+  });
+  assert.match(memo.memo[1], /service business is at early revenue/);
+  assert.match(memo.priorities[0].diagnosis, /service business/);
+  assert.match(memo.priorities[0].actions[0], /For your service business/);
 });
