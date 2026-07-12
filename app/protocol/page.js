@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { buildProtocol, protocolProgress } from "../../lib/protocol";
+import { loadAccountWorkspace, saveWorkspace, track } from "../../lib/clientData";
 
 function ProtocolInner() {
   const params = useSearchParams();
@@ -12,6 +13,8 @@ function ProtocolInner() {
   const [checked, setChecked] = useState({});
   const [notes, setNotes] = useState({});
   const [openDay, setOpenDay] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [review, setReview] = useState({ strongestResult: "", unresolved: "", nextCommitment: "" });
 
   useEffect(() => {
     (async () => {
@@ -36,35 +39,46 @@ function ProtocolInner() {
           localStorage.getItem("tunnl-dev-starter-preview") === "true");
       if (previewingStarter) localStorage.setItem("tunnl-dev-starter-preview", "true");
       let unlocked = previewingStarter;
+      let accountData = null;
+      if (previewingStarter) {
+        try {
+          const previewWorkspace = localStorage.getItem("tunnl-dev-workspace");
+          if (previewWorkspace) accountData = { workspace: JSON.parse(previewWorkspace), readings: [] };
+        } catch (e) {}
+      }
       if (!previewingStarter) {
         try {
           const meRes = await fetch("/api/me");
           const me = await meRes.json();
           unlocked = !!me.unlocked;
-          try { localStorage.setItem("tunnl-starter-unlocked", unlocked ? "true" : "false"); } catch (e) {}
-        } catch (e) {
-          try { unlocked = localStorage.getItem("tunnl-starter-unlocked") === "true"; } catch (e2) {}
-        }
+          if (unlocked) accountData = await loadAccountWorkspace();
+        } catch (e) {}
       }
 
       if (!unlocked) {
         setStatus("denied");
         return;
       }
+      if (!previewingStarter && accountData && !accountData.workspace?.protocol_start_date) {
+        window.location.href = "/account";
+        return;
+      }
 
       try {
         const raw = localStorage.getItem("tunnl-result");
-        const saved = raw ? JSON.parse(raw) : null;
+        const saved = accountData?.readings?.[0]?.result || (raw ? JSON.parse(raw) : null);
         setResult(saved);
         if (saved?.memo) {
-          const built = buildProtocol(saved.memo, {
-            twelve_month_destination: saved.profile?.twelve_month_destination,
-          });
+          const savedSetup = accountData?.workspace?.setup || {};
+          const savedStart = accountData?.workspace?.protocol_start_date || new Date().toISOString().slice(0, 10);
+          setStartDate(savedStart);
+          setReview(accountData?.workspace?.completion_review || { strongestResult: "", unresolved: "", nextCommitment: "" });
+          const built = buildProtocol(saved.memo, { ...saved.profile, ...savedSetup });
           setDays(built);
           const rawChecked = localStorage.getItem("tunnl-protocol-checked");
-          setChecked(rawChecked ? JSON.parse(rawChecked) : {});
+          setChecked(accountData?.workspace?.protocol_checked || (rawChecked ? JSON.parse(rawChecked) : {}));
           const rawNotes = localStorage.getItem("tunnl-protocol-notes");
-          setNotes(rawNotes ? JSON.parse(rawNotes) : {});
+          setNotes(accountData?.workspace?.protocol_notes || (rawNotes ? JSON.parse(rawNotes) : {}));
         }
       } catch (e) {}
       setStatus("ready");
@@ -72,11 +86,24 @@ function ProtocolInner() {
   }, [params]);
 
   const toggle = (day) => {
+    if (day === 14) return;
     const next = { ...checked, [day]: !checked[day] };
     setChecked(next);
     try {
       localStorage.setItem("tunnl-protocol-checked", JSON.stringify(next));
     } catch (e) {}
+    saveWorkspace({ protocol_checked: next });
+    if (next[day]) track("plan_day_completed", { day });
+  };
+
+  const submitReview = async (event) => {
+    event.preventDefault();
+    if (scheduledDay < 14 || !checked[13]) return;
+    const nextChecked = { ...checked, 14: true };
+    const ok = await saveWorkspace({ completion_review: review, protocol_checked: nextChecked });
+    if (!ok) return;
+    setChecked(nextChecked);
+    track("sprint_completed", { daysCompleted: 14 });
   };
 
   const updateNote = (day, value) => {
@@ -86,6 +113,8 @@ function ProtocolInner() {
       localStorage.setItem("tunnl-protocol-notes", JSON.stringify(next));
     } catch (e) {}
   };
+
+  const persistNotes = () => saveWorkspace({ protocol_notes: notes });
 
   const openToday = (day) => {
     setOpenDay(day);
@@ -106,13 +135,12 @@ function ProtocolInner() {
     return (
       <main className="shell">
         <div className="col">
-          <div className="eyebrow">TUNNL · The Protocol</div>
+          <div className="eyebrow">TUNNL · Your 14-Day Plan</div>
           <div className="rule" />
           <p className="copy" style={{ margin: "26px 0" }}>
-            This is Starter content. Commission the Protocol to unlock your
-            14-day sequence.
+            Your 14-Day Plan is included with Starter.
           </p>
-          <Link href="/checkout" className="btn">Commission the Protocol — $49</Link>
+          <Link href="/checkout" className="btn">Start my 14-Day Plan — $49</Link>
         </div>
       </main>
     );
@@ -120,12 +148,28 @@ function ProtocolInner() {
 
   const progress = protocolProgress(checked, days);
   const nextDay = days.find((day) => !checked[day.day]) || days[days.length - 1];
+  const start = startDate ? new Date(`${startDate}T00:00:00`) : new Date();
+  const today = new Date();
+  const scheduledDay = Math.max(0, Math.min(14, Math.floor((today - start) / 86400000) + 1));
+  const missedDays = nextDay ? Math.max(0, scheduledDay - nextDay.day) : 0;
+  const dateForDay = (day) => {
+    const date = new Date(start);
+    date.setDate(date.getDate() + day - 1);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
+  const recoverSchedule = async () => {
+    if (!nextDay) return;
+    const shifted = new Date();
+    shifted.setDate(shifted.getDate() - (nextDay.day - 1));
+    const value = shifted.toISOString().slice(0, 10);
+    if (await saveWorkspace({ protocol_start_date: value })) setStartDate(value);
+  };
 
   return (
     <main className="shell">
       <div className="col">
         <div className="top">
-          <div className="eyebrow">TUNNL · The 14-Day Protocol</div>
+          <div className="eyebrow">TUNNL · Your 14-Day Plan</div>
           <span className="num">№ 002</span>
         </div>
         <div className="rule" />
@@ -133,10 +177,10 @@ function ProtocolInner() {
         <div style={{ padding: "26px 0 8px" }}>
           <div className="q-module">Commissioned</div>
           <h1 className="serif" style={{ fontSize: "clamp(40px, 9vw, 60px)", lineHeight: 1, marginBottom: 14 }}>
-            The Protocol
+            Your 14-Day Plan
           </h1>
           <p className="copy soft">
-            Your memo, re-sequenced into fourteen days. One move at a time.
+            One focused move at a time, built from your reading.
           </p>
         </div>
 
@@ -149,12 +193,13 @@ function ProtocolInner() {
             <h2>{nextDay.title}</h2>
             <p>{nextDay.detail}</p>
             <button className="btn" onClick={() => openToday(nextDay.day)}>Open today&apos;s move</button>
+            {missedDays > 0 && <div className="recovery-note">Life interrupted the schedule. Nothing is lost.<button onClick={recoverSchedule}>Continue from today</button></div>}
           </section>
         )}
 
         <div className="protocol-progress">
           <div className="protocol-progress-copy">
-            <span>Protocol progress</span>
+            <span>Plan progress</span>
             <strong>{progress.done} of {progress.total}</strong>
           </div>
           <div className="protocol-progress-track"><span style={{ width: `${progress.pct}%` }} /></div>
@@ -164,6 +209,7 @@ function ProtocolInner() {
           {days.map((d) => {
             const isChecked = !!checked[d.day];
             const open = openDay === d.day;
+            const canComplete = d.day <= scheduledDay && (d.day === 1 || checked[d.day - 1]);
             const kindLabel = { kickoff: "Kickoff", action: "Move", integration: "Integration", close: "Close" }[d.type];
             return (
               <div id={`protocol-day-${d.day}`} key={d.day} className={`priority${open ? " open" : ""}`}>
@@ -174,12 +220,12 @@ function ProtocolInner() {
                 >
                   <span style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                     <span
-                      onClick={(e) => { e.stopPropagation(); toggle(d.day); }}
+                      onClick={(e) => { e.stopPropagation(); if (canComplete) toggle(d.day); }}
                       style={{
                         width: 20, height: 20, border: "1px solid var(--ink)",
                         display: "inline-flex", alignItems: "center", justifyContent: "center",
                         fontSize: 12, flexShrink: 0, background: isChecked ? "var(--ink)" : "transparent",
-                        color: "var(--paper)", cursor: "pointer",
+                        color: "var(--paper)", cursor: canComplete ? "pointer" : "default", opacity: canComplete ? 1 : 0.35,
                       }}
                     >
                       {isChecked ? "✓" : ""}
@@ -187,6 +233,7 @@ function ProtocolInner() {
                     <span className="title" style={{ fontSize: 20 }}>
                       Day {d.day} — {kindLabel}
                     </span>
+                    <span className="day-date">{dateForDay(d.day)}</span>
                   </span>
                   <span className="state">{open ? "Close —" : "Open +"}</span>
                 </button>
@@ -196,6 +243,7 @@ function ProtocolInner() {
                       {d.title}
                     </p>
                     <p className="diag" style={{ marginBottom: 0 }}>{d.detail}</p>
+                    {d.context && <p className="day-context">{d.context}</p>}
                     <div className="day-specs">
                       <div><span>Time</span><strong>{d.minutes} minutes</strong></div>
                       <div><span>Why now</span><p>{d.why}</p></div>
@@ -208,9 +256,19 @@ function ProtocolInner() {
                         rows={3}
                         value={notes[d.day] || ""}
                         onChange={(event) => updateNote(d.day, event.target.value)}
+                        onBlur={persistNotes}
                         placeholder="Write down what changed, what felt difficult, or what you learned."
                       />
                     </label>
+                    {d.day === 14 && (
+                      <form className="completion-review" onSubmit={submitReview}>
+                        <div className="q-module">Complete your sprint</div>
+                        <label>What changed most?<textarea required rows={3} value={review.strongestResult} onChange={(event) => setReview({ ...review, strongestResult: event.target.value })} /></label>
+                        <label>What is still unresolved?<textarea required rows={3} value={review.unresolved} onChange={(event) => setReview({ ...review, unresolved: event.target.value })} /></label>
+                        <label>What will you commit to next?<textarea required rows={3} value={review.nextCommitment} onChange={(event) => setReview({ ...review, nextCommitment: event.target.value })} /></label>
+                        <button className="btn" type="submit">Complete sprint</button>
+                      </form>
+                    )}
                   </div>
                 )}
               </div>
@@ -220,8 +278,8 @@ function ProtocolInner() {
 
         <div style={{ maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
           <Link href="/account" className="btn full">Starter home</Link>
-          <Link href="/vault" className="btn ghost full">Open the Vault</Link>
-          <Link href="/ledger" className="btn ghost full">View the Ledger</Link>
+          <Link href="/vault" className="btn ghost full">Open Decision Tools</Link>
+          <Link href="/ledger" className="btn ghost full">View Sprint Report</Link>
           <Link href="/memo" className="btn ghost full">Back to the memo</Link>
         </div>
 

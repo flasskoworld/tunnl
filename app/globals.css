@@ -175,8 +175,7 @@ h2.question {
   min-width: 68px; text-align: center; background: var(--ink); color: var(--paper);
   padding: 3px 7px; flex-shrink: 0;
 }
-.band-chip.holding { visibility: hidden; }
-.band-chip.exposed { background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 2px 6px; }
+.band-chip.strong, .band-chip.working { background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 2px 6px; }
 .board-average { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--ink); margin-top: 14px; padding-top: 14px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); }
 .board-average strong { font-family: var(--serif); font-size: 30px; font-weight: 400; letter-spacing: 0; }
 .score-note { font-size: 10.5px; line-height: 1.6; color: var(--ink-soft); padding-top: 10px; max-width: 520px; white-space: normal; }
@@ -224,6 +223,13 @@ h2.question {
 .day-reflection > span { display: block; color: var(--ink-soft); font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 7px; }
 .day-reflection textarea { width: 100%; resize: vertical; border: 1px solid var(--ink); background: var(--paper); color: var(--ink-deep); font-family: var(--mono); font-size: 11.5px; line-height: 1.65; padding: 11px; }
 .day-reflection textarea::placeholder { color: var(--ink-soft); }
+.day-date { color: var(--ink-soft); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+.day-context { border-left: 1px solid var(--ink); color: var(--ink-deep); font-size: 11px; line-height: 1.65; margin-top: 14px; padding-left: 12px; }
+.recovery-note { border-top: 1px solid var(--ink-faint); color: var(--ink-soft); font-size: 10px; line-height: 1.6; margin-top: 18px; padding-top: 14px; }
+.recovery-note button { border: 0; background: transparent; color: var(--ink); font-family: var(--mono); font-size: 10px; text-decoration: underline; cursor: pointer; padding: 0 0 0 6px; }
+.completion-review { border-top: 1px solid var(--ink); margin-top: 24px; padding-top: 20px; }
+.completion-review label { display: block; color: var(--ink); font-size: 10px; margin-bottom: 16px; }
+.completion-review textarea { display: block; width: 100%; margin-top: 7px; resize: vertical; border: 1px solid var(--ink); background: var(--paper); color: var(--ink-deep); font-family: var(--mono); font-size: 11.5px; line-height: 1.65; padding: 11px; }
 .account-progress { color: var(--ink-soft); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; margin-top: 14px; }
 .ecosystem-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); margin-bottom: 30px; }
 .ecosystem-grid a { min-height: 160px; padding: 20px; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); color: var(--ink-deep); text-decoration: none; }
@@ -232,6 +238,11 @@ h2.question {
 .ecosystem-grid strong { display: block; color: var(--ink); font-family: var(--serif); font-size: 25px; font-weight: 400; margin-bottom: 8px; }
 .ecosystem-grid p { color: var(--ink-soft); font-size: 10.5px; line-height: 1.6; }
 .account-signout { border: 0; background: transparent; color: var(--ink-soft); font-family: var(--mono); font-size: 10px; text-decoration: underline; cursor: pointer; padding: 0; }
+.plan-setup { border-top: 1px solid var(--ink); padding-top: 24px; margin: 18px 0 36px; }
+.plan-setup h2 { font-family: var(--serif); color: var(--ink); font-size: clamp(28px, 6vw, 40px); font-weight: 400; line-height: 1.1; margin-bottom: 10px; }
+.plan-setup > p { color: var(--ink-soft); font-size: 12px; line-height: 1.7; margin-bottom: 24px; }
+.plan-setup label { display: block; color: var(--ink); font-size: 10px; letter-spacing: 0.08em; margin-bottom: 18px; }
+.plan-setup input, .plan-setup select { display: block; width: 100%; margin-top: 7px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink-deep); font-family: var(--mono); font-size: 12px; padding: 12px; border-radius: 0; }
 .risk { display: flex; gap: 14px; background: var(--ink); color: var(--paper); padding: 16px 18px; margin-bottom: 10px; }
 .risk p { font-size: 13px; line-height: 1.75; }
 .ladder { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px; margin-bottom: 40px; }
@@ -282,6 +293,9 @@ h2.question {
   .starter-outcomes > div { border-bottom: 1px solid rgba(251, 249, 243, 0.2); padding-right: 0; padding-bottom: 16px; }
   .day-specs, .ecosystem-grid { grid-template-columns: 1fr; }
   .ecosystem-grid a { min-height: 132px; }
+  .sprint-summary { grid-template-columns: 1fr; }
+  .sprint-summary > div { border-right: 0; border-bottom: 1px solid var(--ink); }
+  .sprint-summary > div:last-child { border-bottom: 0; }
 }
 
 /* The Ledger — print-styled export */
@@ -301,6 +315,15 @@ h2.question {
 .ledger-day strong { display: block; color: var(--ink); font-family: var(--serif); font-size: 15px; font-weight: 400; margin-bottom: 4px; }
 .ledger-day span, .ledger-day em { display: block; color: var(--ink-soft); font-size: 9px; line-height: 1.55; }
 .ledger-day em { color: var(--ink-deep); font-style: normal; margin-top: 4px; }
+.sprint-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--ink); margin-bottom: 22px; }
+.sprint-summary > div { padding: 14px; border-right: 1px solid var(--ink); }
+.sprint-summary > div:last-child { border-right: 0; }
+.sprint-summary span { display: block; color: var(--ink-soft); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+.sprint-summary strong { color: var(--ink); font-family: var(--serif); font-size: 25px; font-weight: 400; }
+.sprint-review { border-top: 1px solid var(--ink); margin-bottom: 28px; }
+.sprint-review > div { padding: 13px 0; border-bottom: 1px solid var(--ink-faint); }
+.sprint-review span { display: block; color: var(--ink-soft); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.sprint-review p { font-size: 11px; line-height: 1.65; }
 .ledger-avg-row td { border-top: 1px solid var(--ink); font-weight: 600; padding-top: 10px; }
 .ledger-notes { padding-left: 18px; font-size: 12px; line-height: 1.8; margin-bottom: 10px; }
 .ledger-notes li { margin-bottom: 6px; }

@@ -5,6 +5,7 @@ import { MODULES, weakestModules } from "../../lib/engine";
 
 export default function Checkout() {
   const [result, setResult] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   const [email, setEmail] = useState("");
   const [ack, setAck] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -16,6 +17,7 @@ export default function Checkout() {
       const raw = localStorage.getItem("tunnl-result");
       if (raw) setResult(JSON.parse(raw));
     } catch (e) {}
+    setLoaded(true);
     const params = new URLSearchParams(window.location.search);
     if (params.get("canceled")) setCanceled(true);
   }, []);
@@ -31,7 +33,7 @@ export default function Checkout() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, readingId: result?.date || "" }),
+        body: JSON.stringify({ email, result }),
       });
       const data = await res.json();
       if (data.url) {
@@ -48,6 +50,24 @@ export default function Checkout() {
   const weak = result ? weakestModules(result.scores, 3) : [];
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
 
+  if (!loaded) return <main className="shell" />;
+
+  if (result === null) {
+    return (
+      <main className="shell">
+        <div className="col">
+          <div className="eyebrow">TUNNL · Starter</div>
+          <div className="rule" />
+          <div style={{ padding: "26px 0" }}>
+            <h1 className="serif" style={{ fontSize: "clamp(40px, 9vw, 60px)", lineHeight: 1, marginBottom: 14 }}>Start with your reading.</h1>
+            <p className="copy soft">Starter is built from your diagnostic. Complete it first so your plan begins with your actual priorities.</p>
+          </div>
+          <Link href="/diagnostic" className="btn">Take the diagnostic</Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="shell">
       <div className="col">
@@ -60,11 +80,10 @@ export default function Checkout() {
         <div style={{ padding: "26px 0 8px" }}>
           <div className="q-module">Commissioning</div>
           <h1 className="serif" style={{ fontSize: "clamp(40px, 9vw, 60px)", lineHeight: 1, marginBottom: 14 }}>
-            The Protocol
+            Starter
           </h1>
           <p className="copy soft" style={{ marginBottom: 0 }}>
-            A one-time commission. Not a subscription, not a paywall unlock —
-            a report built from your own reading.
+            A focused 14-day operating sprint built from your own reading.
           </p>
         </div>
 
@@ -92,17 +111,17 @@ export default function Checkout() {
           <div className="rule" />
           <div className="note" style={{ padding: "14px 2px" }}>
             <span className="numeral">ii</span>
-            <p><strong>The 14-Day Protocol</strong> — your plan re-sequenced into a daily calendar, one move per day, with built-in integration days to check what actually landed.</p>
+            <p><strong>Your 14-Day Plan</strong> — one focused move per day, with time estimates, clear completion standards, and recovery when life interrupts.</p>
           </div>
           <div className="rule" />
           <div className="note" style={{ padding: "14px 2px" }}>
             <span className="numeral">iii</span>
-            <p><strong>The Vault</strong> — worksheets for every one of the nine modules: positioning one-liner, enough-number worksheet, kill list, ownership audit, incentive map, and more.</p>
+            <p><strong>Decision Tools</strong> — focused worksheets for positioning, money, ownership, attention, systems, and the choices behind your plan.</p>
           </div>
           <div className="rule" />
           <div className="note" style={{ padding: "14px 2px" }}>
             <span className="numeral">iv</span>
-            <p><strong>The Ledger</strong> — the complete memo and protocol as a numbered, dated, print-ready document.</p>
+            <p><strong>Your Sprint Report</strong> — a dated before-and-after record of your starting point, completed work, reflections, and next commitment.</p>
           </div>
         </div>
 
@@ -113,8 +132,8 @@ export default function Checkout() {
 
         <div className="eyebrow">Your account</div>
         <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 12, lineHeight: 1.7 }}>
-          This creates your TUNNL account — no password. The Protocol
-          follows you across devices from here.
+          This creates your TUNNL account — no password. Your reading and Starter work
+          are saved to this email and restored when you sign in.
         </p>
         <input
           type="email"
@@ -168,7 +187,7 @@ export default function Checkout() {
             onClick={buy}
             style={{ opacity: !ack || loading ? 0.4 : 1, cursor: !ack || loading ? "default" : "pointer" }}
           >
-            {loading ? "Opening checkout…" : "Commission the Protocol — $49"}
+            {loading ? "Opening checkout…" : "Start my 14-Day Plan — $49"}
           </button>
           <div style={{ fontSize: 10, color: "var(--ink-soft)", textAlign: "center", letterSpacing: "0.08em" }}>
             Card · Apple Pay · Google Pay · PayPal — via Stripe

@@ -9,8 +9,8 @@ Personal Economy, Tunnel Vision, Invisible Forces), classifies you as
 Owner / Operator / Builder / Stuck Optimizer, and generates a personalized
 operating memo — verdict, field notes, priority moves, hidden risks.
 
-Scores use a calibrated 0-92 scale benchmarked against operators at scale,
-with Holding, Exposed, Gap, and Critical bands.
+Scores use a directional 0-92 scale derived from the user's answers,
+with Strong, Working, Needs Attention, and Start Here bands.
 
 Design language: ultramarine ink (#2742C7) on paper (#FBF9F3), engraved
 editorial serif (Instrument Serif), IBM Plex Mono, ASCII as the digitized
@@ -18,25 +18,20 @@ craft layer (the veil, the scorecard bars).
 
 ## Stack
 
-- Next.js 14 (App Router), plain CSS — no Tailwind, no UI kit
-- Claude API (server-side route, key never reaches the client)
-- localStorage for memo persistence (v1)
+- Next.js 16 (App Router), plain CSS — no Tailwind, no UI kit
+- Postgres-backed accounts, readings, Plan progress, Tools, and Sprint Reports
+- Stripe Checkout and passwordless email sign-in
 
 ## Run it
 
 ```bash
 npm install
-cp .env.example .env.local   # add your ANTHROPIC_API_KEY
+cp .env.example .env.local   # add database, email, auth, and Stripe settings
 npm run dev                  # http://localhost:3000
 ```
 
-Get an API key at https://console.anthropic.com — API docs:
-https://docs.claude.com/en/api/overview
-
-The diagnostic always creates a complete local reading with the deterministic
-engine in `lib/engine.js`. A key enables the optional "Personalize with AI"
-action on the memo; questionnaire data is sent to Anthropic only when the user
-chooses that action.
+The diagnostic creates a complete reading with the deterministic engine in
+`lib/engine.js`. Starter does not send questionnaire data to an external AI.
 
 ### Accounts and Starter checkout
 
@@ -46,9 +41,8 @@ Passwordless sign-in uses Postgres, signed session cookies, and Resend. Copy
 Stripe checkout additionally requires `STRIPE_SECRET_KEY` and
 `STRIPE_WEBHOOK_SECRET`.
 
-Before production traffic, add per-email and per-IP throttling to the OTP
-request and verification routes. The current six-digit code flow is suitable
-for scaffold testing, but it is not rate-limited yet.
+Email sign-in links are single-use, expire after 15 minutes, and are limited to
+three requests per account every 15 minutes.
 
 ## Push to GitHub
 
@@ -62,8 +56,8 @@ git branch -M main
 git push -u origin main
 ```
 
-Deploys cleanly to Vercel: import the repo, set `ANTHROPIC_API_KEY`
-in project environment variables, ship.
+Deploys after the variables in `.env.example` are set and `schema.sql` has been
+applied to Postgres.
 
 ## Map
 
@@ -72,13 +66,13 @@ app/
   page.js              intro — engraving hero + ASCII veil, module index
   diagnostic/page.js   15-question flow + deterministic scoring and reading
   memo/page.js         operating memo — scorecard, notes, priorities, risks
-  signin/page.js       passwordless email link and code sign-in
+  signin/page.js       passwordless email-link sign-in
   account/page.js      account and Starter entitlement status
   checkout/page.js     Stripe Starter checkout
   protocol/page.js     paid 14-day action plan
   vault/page.js        paid worksheets
   ledger/page.js       print-ready memo export
-  api/memo/route.js    optional server-side Claude personalization
+  api/workspace/route.js account-owned readings and Starter progress
   globals.css          all design tokens + component styles
 components/
   EngravingHero.jsx    fig. 01 — the tunnel

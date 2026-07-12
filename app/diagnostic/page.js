@@ -12,6 +12,7 @@ import {
   buildFallbackMemo,
 } from "../../lib/engine";
 import { asciiBar } from "../../lib/ascii";
+import { syncReading, track } from "../../lib/clientData";
 
 export default function Diagnostic() {
   const router = useRouter();
@@ -59,19 +60,22 @@ export default function Diagnostic() {
 
     const memo = buildFallbackMemo(archetype, weak, profile);
 
+    const result = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString().slice(0, 10),
+      scores,
+      archetype,
+      profile,
+      memo,
+    };
     try {
       localStorage.setItem(
         "tunnl-result",
-        JSON.stringify({
-          date: new Date().toISOString().slice(0, 10),
-          scores,
-          archetype,
-          profile,
-          memo,
-          aiEnhanced: false,
-        })
+        JSON.stringify(result)
       );
     } catch (e) {}
+    syncReading(result).catch(() => {});
+    track("diagnostic_completed", { archetype, weakest: weak });
     router.push("/memo");
   };
 

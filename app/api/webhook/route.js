@@ -6,8 +6,7 @@
 // Docs: https://docs.stripe.com/webhooks
 import { NextResponse } from "next/server";
 import { stripe } from "../../../lib/stripe";
-import { markPurchasePaid, getUserById, createOtpCode } from "../../../lib/db";
-import { createMagicLinkToken } from "../../../lib/auth";
+import { markPurchasePaid, markPurchaseNotified, getUserById, createEmailSignInToken, recordProductEvent, saveReading } from "../../../lib/db";
 import { sendMagicLink } from "../../../lib/mail";
 
 export async function POST(request) {
@@ -25,14 +24,16 @@ export async function POST(request) {
     const session = event.data.object;
     const purchase = await markPurchasePaid(session.id);
 
-    if (purchase) {
+    if (purchase && !purchase.notified_at) {
       const user = await getUserById(purchase.user_id);
       if (user) {
-        const token = await createMagicLinkToken(user.id, user.email);
-        const code = await createOtpCode(user.email);
+        if (purchase.reading) await saveReading(user.id, purchase.reading);
+        const token = await createEmailSignInToken(user.id, "stripe-webhook", { skipRateLimit: true });
         const appUrl = process.env.APP_URL || "http://localhost:3000";
         const link = `${appUrl}/api/auth/callback?token=${token}`;
-        await sendMagicLink(user.email, link, code, { purchased: true });
+        const sent = await sendMagicLink(user.email, link, { purchased: true });
+        if (sent) await markPurchaseNotified(session.id);
+        await recordProductEvent(user.id, "purchase_completed", { product: "starter" });
       }
     }
   }

@@ -66,15 +66,15 @@ Builders, creators, and community leaders consume strategy content endlessly but
 
 ---
 
-### Starter — The Protocol · $49 one-time · **BUILT (v2 — with accounts)**
+### Starter — The 14-Day Plan · $49 one-time · **BUILT (v3 — account-owned workspace)**
 
 **Architecture:** checkout email creates a passwordless account
 (Postgres `users` + `purchases` tables, magic-link + session JWT via
 `jose`, no password ever stored). Paying signs the browser in
 immediately; Stripe's webhook independently marks the purchase paid
 and emails a sign-in message, which is how the same account reaches
-the Protocol/Vault/Ledger from a different device. Every sign-in email
-carries both a tappable link and a 6-digit code — no password option
+the Plan, Decision Tools, and Sprint Report from a different device. Every sign-in email
+carries a single-use 15-minute link — no password option
 was added on purpose: a password path still needs email for recovery
 anyway, so it adds hashing, reset flows, and attack surface without
 removing the email dependency it's meant to avoid. `/api/me` is the
@@ -86,9 +86,9 @@ remains only as a fast local cache, never the source of truth.
 
 **Contents**
 - All 3 priorities unlocked: full diagnosis + action sets
-- **The 14-Day Protocol:** the plan re-sequenced into a daily calendar of moves (one move per day, checkable), generated from the user's own memo
-- **The Vault:** templates mapped module-by-module — positioning one-liner, "enough number" worksheet, kill list, allocation rules, ownership audit
-- **The Ledger export:** the complete memo + protocol as a print-styled PDF, numbered and dated
+- **The 14-Day Plan:** a dated daily sequence with completion standards, recovery, and a Day 14 review
+- **Decision Tools:** focused worksheets mapped to the user's priority modules
+- **The Sprint Report:** the before/after reading, completed work, reflections, and next commitment
 - Protocol regenerates with each new 30-day reading (the purchase covers the account, not one memo)
 
 **Novel mechanic:** the Protocol ships as its own numbered document in the user's archive. Buying it feels like commissioning, not unlocking.

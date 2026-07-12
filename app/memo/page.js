@@ -26,8 +26,6 @@ export default function Memo() {
   const [result, setResult] = useState(null);
   const [expanded, setExpanded] = useState(0);
   const [missing, setMissing] = useState(false);
-  const [enhancing, setEnhancing] = useState(false);
-  const [enhanceError, setEnhanceError] = useState("");
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
@@ -51,9 +49,7 @@ export default function Memo() {
         setUnlocked(Boolean(data.unlocked));
         localStorage.setItem("tunnl-starter-unlocked", data.unlocked ? "true" : "false");
       })
-      .catch(() => {
-        setUnlocked(localStorage.getItem("tunnl-starter-unlocked") === "true");
-      });
+      .catch(() => setUnlocked(false));
   }, []);
 
   if (missing) {
@@ -75,7 +71,7 @@ export default function Memo() {
 
   if (!result) return <main className="shell" />;
 
-  const { scores, archetype, memo, profile, aiEnhanced, date } = result;
+  const { scores, archetype, memo, date } = result;
   const weak = weakestModules(scores, 3);
   const strengths = [...MODULES]
     .sort((a, b) => scores[b.key] - scores[a.key])
@@ -83,28 +79,6 @@ export default function Memo() {
   const average = boardAverage(scores);
   const arch = ARCHETYPES[archetype];
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
-
-  const personalize = async () => {
-    setEnhancing(true);
-    setEnhanceError("");
-    try {
-      const res = await fetch("/api/memo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
-      const personalizedMemo = await res.json();
-      if (!res.ok || personalizedMemo.error) throw new Error("engine unavailable");
-
-      const nextResult = { ...result, memo: personalizedMemo, aiEnhanced: true };
-      localStorage.setItem("tunnl-result", JSON.stringify(nextResult));
-      setResult(nextResult);
-    } catch (e) {
-      setEnhanceError("The live engine is unavailable. Your original reading is unchanged.");
-    } finally {
-      setEnhancing(false);
-    }
-  };
 
   return (
     <main className="shell">
@@ -133,37 +107,12 @@ export default function Memo() {
           <p>“{memo.verdict}”</p>
         </div>
 
-        <div className="engine-option">
-          <div>
-            <div className="q-module">
-              {aiEnhanced ? "Live reading complete" : "The deeper reading · Starter"}
-            </div>
-            <p className="soft">
-              {aiEnhanced
-                ? "The board ran a second pass across your answers, tested your stated blocker against the scores, and sharpened the reading around your destination."
-                : "The scorecard shows where you stand. Starter runs a live second pass across every answer to expose contradictions, sharpen the verdict, and point the next moves at your twelve-month destination."}
-            </p>
-          </div>
-          {!aiEnhanced && (
-            <div className="engine-action">
-              {unlocked ? (
-                <button className="btn ghost" onClick={personalize} disabled={enhancing}>
-                  {enhancing ? "Running the second pass..." : "Run the deeper analysis"}
-                </button>
-              ) : (
-                <Link href="/checkout" className="btn ghost">Unlock the deeper analysis</Link>
-              )}
-            </div>
-          )}
-          {enhanceError && <p className="engine-error">{enhanceError}</p>}
-        </div>
-
         <div className="eyebrow">Module scorecard</div>
         <div className="scorecard">
           {MODULES.map((m) => {
             const score = scores[m.key];
             const band = scoreBand(score);
-            const flagged = band !== "Holding";
+            const flagged = band !== "Strong";
             return (
               <div key={m.key} className="score-row">
                 <span className="label" style={{ fontWeight: flagged ? 500 : 400 }}>
@@ -173,7 +122,7 @@ export default function Memo() {
                   {asciiBar(score)}
                 </span>
                 <span className="val">{score}</span>
-                <span className={`band-chip ${band.toLowerCase()}`}>{band}</span>
+                <span className={`band-chip ${band.toLowerCase().replaceAll(" ", "-")}`}>{band}</span>
               </div>
             );
           })}
@@ -182,7 +131,7 @@ export default function Memo() {
             <strong>{average}</strong>
           </div>
           <p className="score-note">
-            Calibrated against operators at scale, not against your peers. The board never shows a perfect position.
+            A directional snapshot from your answers. Look for the pattern: where momentum is working and where focused attention can create the biggest change.
           </p>
         </div>
 
@@ -260,16 +209,16 @@ export default function Memo() {
         {!unlocked && (
           <section className="starter-offer">
             <div className="starter-kicker">Starter · One-time · $49</div>
-            <h2>Knowing the gap is free. Closing it is the Protocol.</h2>
+            <h2>Your reading found the constraint. Starter helps you move it.</h2>
             <p className="starter-lede">
               Turn this reading into a focused 14-day sequence built around your three lowest-leverage points and your stated destination.
             </p>
             <div className="starter-outcomes">
-              <div><span>01</span><strong>Deeper reading</strong><p>A live second pass across every answer, contradiction, and priority.</p></div>
-              <div><span>02</span><strong>14-Day Protocol</strong><p>One sequenced move per day, with the full three-priority diagnosis.</p></div>
-              <div><span>03</span><strong>Tools that stay yours</strong><p>Nine Vault worksheets and a print-ready Ledger for the work ahead.</p></div>
+              <div><span>01</span><strong>Your 14-Day Plan</strong><p>One focused move per day, shaped around your three priority constraints.</p></div>
+              <div><span>02</span><strong>Decision Tools</strong><p>Focused worksheets for the choices behind the work.</p></div>
+              <div><span>03</span><strong>Sprint Report</strong><p>A clear before-and-after record of what you changed.</p></div>
             </div>
-            <Link href="/checkout" className="btn starter-cta">Build my Protocol · $49 one time</Link>
+            <Link href="/checkout" className="btn starter-cta">Create my 14-Day Plan · $49</Link>
             <div className="starter-assurance">No subscription. Your reading stays available after purchase.</div>
           </section>
         )}
@@ -287,7 +236,7 @@ export default function Memo() {
         <div className="eyebrow">Where TUNNL is going</div>
         <div className="ladder">
           {[
-            { name: "Starter", desc: "$49 once · The Protocol, Vault, and Ledger", lead: true },
+            { name: "Starter", desc: "$49 once · 14-Day Plan, Decision Tools, and Sprint Report", lead: true },
             { name: "Builder", desc: "Coming soon · ongoing guidance and progress intelligence", soon: true },
             { name: "Sovereign", desc: "Coming later · the board for teams and communities", soon: true },
           ].map((t) => (
@@ -301,13 +250,13 @@ export default function Memo() {
 
         {unlocked ? (
           <div className="memo-actions">
-            <Link href="/protocol" className="btn full">Open the 14-Day Protocol</Link>
-            <Link href="/vault" className="btn ghost full">Open the Vault</Link>
-            <Link href="/ledger" className="btn ghost full">View the Ledger</Link>
+            <Link href="/protocol" className="btn full">Open the 14-Day Plan</Link>
+            <Link href="/vault" className="btn ghost full">Open Decision Tools</Link>
+            <Link href="/ledger" className="btn ghost full">View Sprint Report</Link>
           </div>
         ) : (
           <div className="memo-actions">
-            <Link href="/checkout" className="btn full">Commission the Protocol — $49</Link>
+            <Link href="/checkout" className="btn full">Start my 14-Day Plan — $49</Link>
             <Link href="/signin" className="signin-link">
               Already commissioned on another device? Sign in
             </Link>

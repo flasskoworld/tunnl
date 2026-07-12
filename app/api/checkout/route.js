@@ -9,14 +9,19 @@
 // account under Dashboard > Settings > Payment methods.
 import { NextResponse } from "next/server";
 import { stripe, STARTER_PRICE_USD } from "../../../lib/stripe";
-import { findOrCreateUser, createPendingPurchase } from "../../../lib/db";
-import { setSessionCookie } from "../../../lib/auth";
+import { findOrCreateUser, createPendingPurchase, recordProductEvent } from "../../../lib/db";
 
 export async function POST(request) {
   try {
-    const { email, readingId } = await request.json();
+    const { email, result } = await request.json();
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Enter a valid email" }, { status: 400 });
+    }
+    if (!result?.scores || !result?.memo || !result?.profile) {
+      return NextResponse.json({ error: "Complete the diagnostic before checkout" }, { status: 400 });
+    }
+    if (JSON.stringify(result).length > 100000) {
+      return NextResponse.json({ error: "Reading is too large" }, { status: 413 });
     }
 
     const user = await findOrCreateUser(email);
@@ -32,26 +37,24 @@ export async function POST(request) {
             currency: "usd",
             unit_amount: STARTER_PRICE_USD * 100,
             product_data: {
-              name: "TUNNL — The Protocol",
+              name: "TUNNL — Starter",
               description:
-                "The full memo unlocked, the 14-Day Protocol, the Vault, and the Ledger export. One-time. Final sale.",
+                "Your 14-Day Plan, Decision Tools, and Sprint Report. One-time. Final sale.",
             },
           },
           quantity: 1,
         },
       ],
-      metadata: { userId: user.id, readingId: readingId || "" },
+      metadata: { userId: user.id, readingSource: result.id || result.date || "diagnostic" },
       success_url: `${origin}/protocol?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout?canceled=1`,
     });
 
-    await createPendingPurchase(user.id, session.id, "starter");
-    // Sign them in now — payment status is checked separately via
-    // /api/me once the webhook (or verify-purchase fallback) confirms.
-    await setSessionCookie(user.id, user.email);
+    await createPendingPurchase(user.id, session.id, "starter", result);
+    await recordProductEvent(user.id, "checkout_started", { product: "starter" });
 
     return NextResponse.json({ url: session.url });
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    return NextResponse.json({ error: "Checkout could not be started" }, { status: 500 });
   }
 }
