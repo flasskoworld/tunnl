@@ -10,6 +10,7 @@ import {
 } from "../../lib/engine";
 import { asciiBar } from "../../lib/ascii";
 import { buildProtocol } from "../../lib/protocol";
+import { interventionFor } from "../../lib/interventions";
 
 const STRENGTH_COPY = {
   leverage: "You already look for force multipliers instead of treating effort as the only input.",
@@ -190,10 +191,10 @@ export default function Memo() {
                 {open && (
                   <div className="priority-body">
                     <p className="diag">{p.diagnosis}</p>
-                    {p.actions.map((a, j) => (
+                    {(p.intervention || interventionFor(result.profile?.business_model || "creator", p.module)).moves.map((move, j) => (
                       <div key={j} className="action">
                         <span className="arrow">→</span>
-                        <span>{a}</span>
+                        <span>{move.detail}</span>
                       </div>
                     ))}
                   </div>

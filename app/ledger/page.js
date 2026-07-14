@@ -4,8 +4,9 @@ import Link from "next/link";
 import { MODULES, scoreBand, boardAverage, weakestModules, ARCHETYPES } from "../../lib/engine";
 import { buildProtocol } from "../../lib/protocol";
 import { asciiBar } from "../../lib/ascii";
-import { loadAccountWorkspace } from "../../lib/clientData";
+import { loadAccountWorkspace, readingForWorkspace } from "../../lib/clientData";
 import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
+import { interventionFor } from "../../lib/interventions";
 
 export default function Ledger() {
   const [unlocked, setUnlocked] = useState(null);
@@ -43,7 +44,8 @@ export default function Ledger() {
   function loadLedgerData(accountData = null) {
     try {
       const raw = localStorage.getItem("tunnl-result");
-      const saved = accountData?.readings?.[0]?.result || (raw ? JSON.parse(raw) : null);
+      const localResult = raw ? JSON.parse(raw) : null;
+      const saved = readingForWorkspace(accountData, localResult);
       setWorkspace(accountData?.workspace ? { ...accountData.workspace, benchmarks: accountData.benchmarks || [] } : null);
       setReadings(accountData?.readings || (saved ? [{ result: saved }] : []));
       setResult(saved);
@@ -76,8 +78,10 @@ export default function Ledger() {
   const weak = weakestModules(scores, 3);
   const arch = ARCHETYPES[archetype];
   const avg = boardAverage(scores);
-  const baseline = readings[readings.length - 1]?.result || result;
-  const latest = readings[0]?.result || result;
+  const sprintReadingId = workspace?.setup?.readingId;
+  const baselineIndex = readings.findIndex((reading) => reading.result?.id === sprintReadingId || reading.source_id === sprintReadingId);
+  const baseline = baselineIndex >= 0 ? readings[baselineIndex].result : result;
+  const latest = baselineIndex > 0 ? readings[0].result : result;
   const review = workspace?.completion_review || {};
   const completedCount = Object.values(workspace?.protocol_checked || {}).filter(Boolean).length;
   const reflectionEntries = Object.entries(workspace?.protocol_notes || {}).filter(([, value]) => String(value).trim());
@@ -85,8 +89,19 @@ export default function Ledger() {
   const movementCount = evidenceEntries.filter(([, value]) => ["strong", "some"].includes(value.signal)).length;
   const checkpoint = workspace?.course_correction || {};
   const benchmarks = workspace?.benchmarks || [];
-  const hasFollowUp = readings.length > 1;
+  const hasFollowUp = baselineIndex > 0;
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
+  const primary = memo.priorities[0];
+  const primaryTrack = primary.intervention || interventionFor(result.profile?.business_model || "creator", primary.module);
+  const targetStatus = {
+    exceeded: "Exceeded the target",
+    met: "Met the target",
+    moved: "Moved, but did not reach the target",
+    unchanged: "Did not move yet",
+    unmeasured: "Could not be measured",
+  }[review.targetStatus] || "Not completed yet";
+  const triedModules = [...new Set(evidenceEntries.map(([, entry]) => entry.module).filter(Boolean))];
+  const nextMove = review.nextCommitment || primary.nextMove || primaryTrack.nextMove || "Complete the sprint review to choose the next move.";
 
   return (
     <>
@@ -107,13 +122,22 @@ export default function Ledger() {
         <h1 className="ledger-h1">Your Sprint Report</h1>
         <p className="ledger-sub">{arch.line}</p>
 
+        <div className="ledger-label">The result, in five questions</div>
+        <section className="report-answers">
+          <div><span>01 · What was the constraint?</span><strong>{moduleLabel(primary.module)}</strong><p>{primary.diagnosis}</p></div>
+          <div><span>02 · What did you try?</span><strong>{evidenceEntries.length ? `${evidenceEntries.length} evidence-producing moves` : "The intervention is still in progress"}</strong><p>{triedModules.length ? triedModules.map(moduleLabel).join(", ") : memo.priorities.map((priority) => moduleLabel(priority.module)).join(", ")}</p></div>
+          <div><span>03 · What evidence appeared?</span><strong>{movementCount} of {evidenceEntries.length || 0} recorded moves created movement</strong><p>{review.strongestResult || evidenceEntries[0]?.[1]?.output || "Evidence will appear here as action days are completed."}</p></div>
+          <div><span>04 · Did the target move?</span><strong>{targetStatus}</strong><p>{workspace?.setup?.targetMetric || "Sprint measure"}: {workspace?.setup?.baselineValue || "starting value not recorded"}{" -> "}{review.actualValue || "in progress"} · Target {workspace?.setup?.targetValue || "not recorded"}</p></div>
+          <div><span>05 · What should happen next?</span><strong>{nextMove}</strong><p>{review.unresolved ? `Still unresolved: ${review.unresolved}` : "The final review turns the evidence into the next commitment."}</p></div>
+        </section>
+
         <div className="ledger-label">Before → After</div>
         <div className="sprint-summary">
           <div><span>Starting average</span><strong>{boardAverage(baseline.scores)}</strong></div>
           <div><span>Follow-up average</span><strong>{hasFollowUp ? boardAverage(latest.scores) : "—"}</strong></div>
           <div><span>Evidence that moved</span><strong>{movementCount}/{evidenceEntries.length || "—"}</strong></div>
         </div>
-        <div className="ledger-label">The Tunnl Method · Version 1.0</div>
+        <div className="ledger-label">The Tunnl Method · Version 1.1</div>
         <div className="method-report">{TUNNL_METHOD.map((stage, index) => <div key={stage.key}><span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong><p>{stage.description}</p></div>)}</div>
         {checkpoint.clearestSignal && <><div className="ledger-label" style={{ marginTop: 28 }}>Day 7 Course Correction</div><div className="sprint-review"><div><span>Clearest signal</span><p>{checkpoint.clearestSignal}</p></div><div><span>Decision</span><p>{checkpoint.direction === "change" ? "Change course" : checkpoint.direction === "narrow" ? "Narrow the target" : "Continue"}{checkpoint.revisedConstraint ? ` — ${checkpoint.revisedConstraint}` : ""}</p></div></div></>}
         {(review.strongestResult || review.unresolved || review.nextCommitment) && (
@@ -198,8 +222,8 @@ export default function Ledger() {
             <div className="ledger-priority-title">{i + 1}. {moduleLabel(p.module)}</div>
             <p className="ledger-priority-diag">{p.diagnosis}</p>
             <ul className="ledger-actions">
-              {p.actions.map((a, j) => (
-                <li key={j}>{a}</li>
+              {(p.intervention || interventionFor(result.profile?.business_model || "creator", p.module)).moves.map((move, j) => (
+                <li key={j}>{move.detail}</li>
               ))}
             </ul>
           </div>

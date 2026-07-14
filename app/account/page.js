@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { buildProtocol, protocolProgress } from "../../lib/protocol";
-import { loadAccountWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
+import { loadAccountWorkspace, readingForWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
 import { TUNNL_METHOD } from "../../lib/methodology";
+import { interventionFor } from "../../lib/interventions";
 
 export default function Account() {
   const [me, setMe] = useState(null);
@@ -14,7 +15,9 @@ export default function Account() {
   const [setup, setSetup] = useState({
     focusProject: "",
     audience: "",
-    successMeasure: "",
+    targetMetric: "",
+    baselineValue: "",
+    targetValue: "",
     weeklyCapacity: "4 hours",
     startDate: new Date().toISOString().slice(0, 10),
   });
@@ -42,7 +45,7 @@ export default function Account() {
       const savedPreview = localStorage.getItem("tunnl-dev-workspace");
       const previewWorkspace = savedPreview ? JSON.parse(savedPreview) : null;
       if (previewMode === "setup") setWorkspace({ protocol_start_date: null, setup: {} });
-      else if (previewWorkspace) setWorkspace(previewWorkspace);
+      else setWorkspace(previewWorkspace || { protocol_start_date: null, setup: {} });
     } else {
     fetch("/api/me")
       .then((r) => r.json())
@@ -55,7 +58,7 @@ export default function Account() {
           if (localResult) await syncReading(localResult).catch(() => false);
           loadAccountWorkspace().then((accountData) => {
             if (!accountData) return;
-            const restored = accountData.readings?.[0]?.result || localResult;
+            const restored = readingForWorkspace(accountData, localResult);
             setWorkspace(accountData.workspace);
             setSetup((current) => ({
               ...current,
@@ -107,12 +110,37 @@ export default function Account() {
     : [];
   const progress = protocolProgress(checked, days);
   const nextDay = days.find((day) => !checked[day.day]);
-  const needsSetup = me.unlocked && workspace && !workspace.protocol_start_date;
+  const needsSetup = me.unlocked && result && workspace && !workspace.protocol_start_date;
+  const primaryPriority = result?.memo?.priorities?.[0];
+  const primaryIntervention = primaryPriority
+    ? primaryPriority.intervention || interventionFor(result.profile?.business_model || "creator", primaryPriority.module)
+    : null;
 
   const startPlan = async (event) => {
     event.preventDefault();
     const { startDate, ...details } = setup;
-    const previewWorkspace = { setup: details, protocol_start_date: startDate };
+    const sprintSetup = {
+      ...details,
+      successMeasure: `${details.targetMetric}: ${details.baselineValue} -> ${details.targetValue}`,
+      sprintId: crypto.randomUUID(),
+      readingId: result?.id,
+    };
+    const previewWorkspace = {
+      setup: sprintSetup,
+      protocol_start_date: startDate,
+      protocol_checked: {},
+      protocol_notes: {},
+      protocol_evidence: {},
+      course_correction: {},
+      vault_values: {},
+      completion_review: {},
+    };
+    setChecked({});
+    try {
+      localStorage.setItem("tunnl-protocol-checked", "{}");
+      localStorage.setItem("tunnl-protocol-notes", "{}");
+      localStorage.setItem("tunnl-vault-values", "{}");
+    } catch (error) {}
     if (isPreview) {
       localStorage.setItem("tunnl-dev-workspace", JSON.stringify(previewWorkspace));
       setWorkspace(previewWorkspace);
@@ -121,7 +149,7 @@ export default function Account() {
     }
     const ok = await saveWorkspace(previewWorkspace);
     if (!ok) return;
-    setWorkspace((current) => ({ ...current, setup: details, protocol_start_date: startDate }));
+    setWorkspace(previewWorkspace);
     track("plan_started", { startDate });
   };
 
@@ -147,10 +175,15 @@ export default function Account() {
           <form className="plan-setup" onSubmit={startPlan}>
             <div className="q-module">Set up your sprint</div>
             <h2>Make the next 14 days specific.</h2>
-            <p>Five details turn your reading into a plan you can actually use.</p>
+            <p>Name the project, the people it serves, and one measure Tunnl can compare on Day 14.</p>
             <label>What are you moving forward?<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="Launch my first paid workshop" /></label>
             <label>Who is it for?<input required value={setup.audience} onChange={(event) => setSetup({ ...setup, audience: event.target.value })} placeholder="Independent designers building an audience" /></label>
-            <label>What would meaningful progress look like?<input required value={setup.successMeasure} onChange={(event) => setSetup({ ...setup, successMeasure: event.target.value })} placeholder="Ten qualified conversations and one paid customer" /></label>
+            <fieldset className="sprint-target-fields"><legend>Your Sprint Target</legend>
+              {primaryIntervention && <p className="target-suggestion"><strong>Tunnl suggests measuring:</strong> {primaryIntervention.baseline}<br /><strong>Movement would look like:</strong> {primaryIntervention.passSignal}</p>}
+              <label>What are you measuring?<input required value={setup.targetMetric} onChange={(event) => setSetup({ ...setup, targetMetric: event.target.value })} placeholder="Qualified conversations" /></label>
+              <label>Where is it now?<input required value={setup.baselineValue} onChange={(event) => setSetup({ ...setup, baselineValue: event.target.value })} placeholder="2 per month" /></label>
+              <label>What would movement look like by Day 14?<input required value={setup.targetValue} onChange={(event) => setSetup({ ...setup, targetValue: event.target.value })} placeholder="6 qualified conversations" /></label>
+            </fieldset>
             <label>Time available each week<select value={setup.weeklyCapacity} onChange={(event) => setSetup({ ...setup, weeklyCapacity: event.target.value })}><option>2 hours</option><option>4 hours</option><option>6 hours</option><option>8+ hours</option></select></label>
             <label>Start date<input required type="date" value={setup.startDate} onChange={(event) => setSetup({ ...setup, startDate: event.target.value })} /></label>
             <button className="btn" type="submit">Create my 14-Day Plan</button>

@@ -14,6 +14,8 @@ import {
 } from "../lib/engine.js";
 import { buildProtocol, protocolProgress } from "../lib/protocol.js";
 import { courseCorrectionMode, interventionKey, METHOD_VERSION, TUNNL_METHOD } from "../lib/methodology.js";
+import { allInterventionTracks } from "../lib/interventions.js";
+import { prefillVaultValues, vaultFor } from "../lib/vault.js";
 
 const scoredQuestions = QUESTIONS.filter((question) => !question.context);
 
@@ -51,18 +53,39 @@ test("the Plan contains 14 sequenced, personalized days", () => {
     twelve_month_destination: "paying product",
     focusProject: "a paid design workshop",
     audience: "independent designers",
-    successMeasure: "one paid customer",
+    targetMetric: "Paid customers",
+    baselineValue: "0",
+    targetValue: "1",
   });
   assert.equal(days.length, 14);
   assert.equal(days[0].type, "kickoff");
   assert.equal(days.at(-1).type, "close");
   assert.match(days[1].context, /paid design workshop/);
-  assert.match(days.at(-1).doneWhen, /one paid customer/);
+  assert.match(days.at(-1).doneWhen, /Paid customers/);
 });
 
-test("progress counts completed days", () => {
-  const progress = protocolProgress({ 1: true, 2: true, 3: false }, Array.from({ length: 14 }));
+test("progress counts only completed days from the current sprint", () => {
+  const progress = protocolProgress({ 1: true, 2: true, 3: false, 99: true }, Array.from({ length: 14 }, (_, index) => ({ day: index + 1 })));
   assert.deepEqual(progress, { done: 2, total: 14, pct: 14 });
+});
+
+test("model-specific tracks remove cross-model action mismatches", () => {
+  const productOwnership = allInterventionTracks().find((track) => track.id === "product.ownership");
+  const serviceNetwork = allInterventionTracks().find((track) => track.id === "service.network");
+  assert.doesNotMatch(productOwnership.moves.map((move) => move.detail).join(" "), /followers|email capture/i);
+  assert.doesNotMatch(serviceNetwork.moves.map((move) => move.detail).join(" "), /members talk|member space/i);
+  assert.match(productOwnership.moves[2].detail, /export|recovery|fallback/i);
+  assert.match(serviceNetwork.moves[2].detail, /clients|partners|introduction/i);
+});
+
+test("recommended Decision Tools inherit and prefill the intervention", () => {
+  const result = buildFallbackMemo("OPERATOR", ["network", "strategy", "building"], { business_model: "product" });
+  const wrapped = { profile: { business_model: "product" }, memo: result };
+  const tool = vaultFor("network", "product");
+  const values = prefillVaultValues(wrapped, { targetMetric: "Activated users", baselineValue: "2", targetValue: "8" });
+  assert.match(tool.subtitle, /product-native invitation loop/);
+  assert.match(values["network:1"], /Activated users: 2 -> 8/);
+  assert.match(values["network:4"], /accepted invitations/);
 });
 
 test("the Plan respects a smaller weekly time budget", () => {
@@ -78,16 +101,19 @@ test("Day 7 adapts the second half without changing the 14-day shape", () => {
   const days = buildProtocol(memo, { focusProject: "a creator toolkit" }, {
     direction: "change",
     revisedConstraint: "the offer is unclear",
+    revisedModule: "strategy",
   });
   assert.equal(days.length, 14);
   assert.equal(days[6].type, "checkpoint");
   assert.equal(days[6].title, "Course Correction");
   assert.match(days[7].detail, /offer is unclear/);
-  assert.equal(days[7].interventionId, interventionKey(8));
+  assert.equal(days[7].module, "strategy");
+  assert.equal(days[7].interventionId, interventionKey("creator.strategy", "decision"));
+  assert.ok(days.slice(7, 13).every((day) => day.module === "strategy"));
 });
 
 test("the Tunnl Method is versioned and resolves correction modes", () => {
-  assert.equal(METHOD_VERSION, "1.0");
+  assert.equal(METHOD_VERSION, "1.1");
   assert.deepEqual(TUNNL_METHOD.map((stage) => stage.key), ["diagnose", "focus", "test", "adjust", "prove"]);
   assert.equal(courseCorrectionMode({ friction: "scope" }), "narrow");
   assert.equal(courseCorrectionMode({ direction: "change" }), "change");
@@ -116,5 +142,21 @@ test("the reading combines model, stage, evidence, and constraint context", () =
   });
   assert.match(memo.memo[1], /service business is at early revenue/);
   assert.match(memo.priorities[0].diagnosis, /service business/);
-  assert.match(memo.priorities[0].actions[0], /For your service business/);
+  assert.equal(memo.priorities[0].intervention.model, "service");
+  assert.equal(memo.priorities[0].intervention.module, "strategy");
+});
+
+test("every model and module has a complete evidence-producing intervention", () => {
+  const tracks = allInterventionTracks();
+  assert.equal(tracks.length, 36);
+  tracks.forEach((track) => {
+    assert.equal(track.moves.length, 3);
+    assert.deepEqual(track.moves.map((move) => move.kind), ["Decision", "Artifact", "Real-world test"]);
+    assert.ok(track.hypothesis);
+    assert.ok(track.baseline);
+    assert.ok(track.passSignal);
+    assert.ok(track.failSignal);
+    assert.ok(track.nextMove);
+    assert.ok(track.toolKey);
+  });
 });
