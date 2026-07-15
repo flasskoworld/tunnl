@@ -47,11 +47,14 @@ export async function PATCH(request) {
   const updates = await request.json();
   if (updates.protocol_evidence) {
     const allowedSignals = new Set(["strong", "some", "none", "blocked"]);
+    const allowedStatuses = new Set(["started", "waiting", "complete"]);
     const entries = Object.entries(updates.protocol_evidence);
     if (entries.length > 14 || entries.some(([day, entry]) =>
       Number(day) < 1 || Number(day) > 14 ||
       (entry?.signal && !allowedSignals.has(entry.signal)) ||
-      String(entry?.output || "").length > 4000
+      (entry?.status && !allowedStatuses.has(entry.status)) ||
+      String(entry?.output || "").length > 4000 ||
+      JSON.stringify(entry || {}).length > 12000
     )) return NextResponse.json({ error: "Invalid evidence record" }, { status: 400 });
   }
   if (updates.course_correction && JSON.stringify(updates.course_correction).length > 10000) {

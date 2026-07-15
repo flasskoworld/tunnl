@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { MODULES, weakestModules } from "../../lib/engine";
 import { legacyPrefillVaultValues, vaultFor } from "../../lib/vault";
+import { buildProtocol } from "../../lib/protocol";
 import { loadAccountWorkspace, readingForWorkspace, saveWorkspace } from "../../lib/clientData";
 import StarterNav from "../components/StarterNav";
 
@@ -22,7 +23,7 @@ function ToolCard({ module, model, open, onToggle, values, setField, persistValu
           <section className="tool-guidance"><div className="q-module">Tunnl recommends</div>{coreGuidance.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</section>
           <section className="tool-response">
             <div className="q-module">Your response</div>
-            {tool.fields.map((field) => <label key={field.key}><span>{field.label}</span><small>{field.prompt}</small><textarea rows={field.key === "result" ? 4 : 3} value={values[`${module.key}:response:${field.key}`] || ""} onChange={(event) => setField(module.key, field.key, event.target.value)} onBlur={persistValues} placeholder="Write your response here" /></label>)}
+            {tool.fields.map((field) => <label key={field.key}><span>{field.label}</span><small>{field.prompt}</small><textarea maxLength={1500} rows={field.key === "result" ? 4 : 3} value={values[`${module.key}:response:${field.key}`] || ""} onChange={(event) => setField(module.key, field.key, event.target.value)} onBlur={(event) => persistValues(module.key, field.key, event.target.value)} placeholder="Write your response here" /></label>)}
             <p>Responses save automatically.</p>
           </section>
           <details className="tool-playbook"><summary>View the full intervention playbook</summary>{playbook.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</details>
@@ -41,6 +42,9 @@ export default function Vault() {
   const [saveStatus, setSaveStatus] = useState("");
   const [isPreview, setIsPreview] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [linkedEvidence, setLinkedEvidence] = useState({});
+  const [linkedPlanDay, setLinkedPlanDay] = useState(null);
+  const saveTimer = useRef(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -55,7 +59,8 @@ export default function Vault() {
       const savedResult = localStorage.getItem("tunnl-result");
       localResult = savedResult ? JSON.parse(savedResult) : null;
     } catch (error) {}
-    const applyData = (selectedResult, selectedSetup = {}, savedValues = {}) => {
+    const applyData = (selectedResult, workspace = {}, savedValues = {}) => {
+      const selectedSetup = workspace.setup || {};
       const legacyPrefills = legacyPrefillVaultValues(selectedResult, selectedSetup);
       const migrated = Object.fromEntries(Object.entries(savedValues).filter(([key, value]) =>
         key.includes(":response:") || legacyPrefills[key] !== value
@@ -64,6 +69,12 @@ export default function Vault() {
       if (requestedTool && !priorityKeys.includes(requestedTool)) setShowLibrary(true);
       setResult(selectedResult);
       setValues(migrated);
+      const planDays = selectedResult?.memo
+        ? buildProtocol(selectedResult.memo, { ...selectedResult.profile, ...selectedSetup }, workspace.course_correction || {})
+        : [];
+      const planDay = planDays.find((day) => String(day.day) === String(params.get("day")));
+      setLinkedPlanDay(planDay || null);
+      setLinkedEvidence(workspace.protocol_evidence || {});
     };
     const previewingStarter =
       process.env.NODE_ENV === "development" &&
@@ -74,7 +85,7 @@ export default function Vault() {
       setIsPreview(true);
       setUnlocked(true);
       const previewWorkspace = JSON.parse(localStorage.getItem("tunnl-dev-workspace") || "{}");
-      applyData(localResult, previewWorkspace.setup, localValues);
+      applyData(localResult, previewWorkspace, previewWorkspace.vault_values || localValues);
     } else {
       fetch("/api/me")
         .then((r) => r.json())
@@ -83,7 +94,7 @@ export default function Vault() {
           if (data.unlocked) {
             loadAccountWorkspace().then((accountData) => {
               const selectedResult = readingForWorkspace(accountData, localResult);
-              applyData(selectedResult, accountData?.workspace?.setup, accountData?.workspace?.vault_values || localValues);
+              applyData(selectedResult, accountData?.workspace || {}, accountData?.workspace?.vault_values || localValues);
             });
           }
         })
@@ -97,12 +108,46 @@ export default function Vault() {
     try {
       localStorage.setItem("tunnl-vault-values", JSON.stringify(next));
     } catch (e) {}
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => persistValues(moduleKey, fieldKey, val, next), 600);
   };
 
-  const persistValues = async () => {
+  const persistValues = async (moduleKey, fieldKey, fieldValue, savedValues = values) => {
+    window.clearTimeout(saveTimer.current);
+    const nextValues = { ...savedValues, [`${moduleKey}:response:${fieldKey}`]: fieldValue };
+    setValues(nextValues);
     setSaveStatus("Saving...");
-    const ok = await saveWorkspace({ vault_values: values });
-    setSaveStatus(ok ? "Saved" : "Could not save. Check the connection and try again.");
+    let nextEvidence = linkedEvidence;
+    const isLinked = linkedPlanDay?.toolKey === moduleKey && linkedPlanDay?.type === "action";
+    if (isLinked) {
+      const tool = vaultFor(moduleKey, result?.profile?.business_model);
+      const toolResponses = Object.fromEntries(tool.fields.map((field) => [
+        field.key,
+        nextValues[`${moduleKey}:response:${field.key}`] || "",
+      ]));
+      const summary = [
+        ["Decision", toolResponses.decision],
+        ["Work", toolResponses.work],
+        ["Result", toolResponses.result],
+        ["Starting point", toolResponses.baseline],
+      ].filter(([, value]) => value?.trim()).map(([label, value]) => `${label}: ${value.trim()}`).join("\n").slice(0, 4000);
+      nextEvidence = {
+        ...linkedEvidence,
+        [linkedPlanDay.day]: {
+          ...(linkedEvidence[linkedPlanDay.day] || {}),
+          output: summary,
+          status: linkedEvidence[linkedPlanDay.day]?.status || "started",
+          type: linkedEvidence[linkedPlanDay.day]?.type || "decision",
+          module: linkedPlanDay.module,
+          interventionId: linkedPlanDay.interventionId,
+          methodVersion: linkedPlanDay.methodVersion,
+          toolResponses: { ...toolResponses, toolTitle: tool.title },
+        },
+      };
+      setLinkedEvidence(nextEvidence);
+    }
+    const ok = await saveWorkspace({ vault_values: nextValues, ...(isLinked ? { protocol_evidence: nextEvidence } : {}) });
+    setSaveStatus(ok ? (isLinked ? `Saved to Day ${linkedPlanDay.day}` : "Saved") : "Could not save. Check the connection and try again.");
   };
 
   if (unlocked === null) return <main className="shell" />;
@@ -140,7 +185,7 @@ export default function Vault() {
         </div>
 
         {sourceDay && openModule && <div className="tool-from-day"><span>Day {sourceDay}</span><p>This tool supports today&apos;s move and records the evidence specific to this decision.</p></div>}
-        {saveStatus && <div className={`save-status${saveStatus === "Saved" ? " saved" : ""}`}>{saveStatus}</div>}
+        {saveStatus && <div className={`save-status${saveStatus.startsWith("Saved") ? " saved" : ""}`}>{saveStatus}</div>}
 
         <div className="tool-section-label"><span>For this sprint</span><strong>{result ? weakestModules(result.scores, 3).length : 0} recommended</strong></div>
         <div className="tool-list">

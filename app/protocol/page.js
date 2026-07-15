@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MODULES } from "../../lib/engine";
-import { buildProtocol, protocolProgress } from "../../lib/protocol";
+import { buildProtocol, dayIsAdvanced, nextActionableDay, protocolProgress } from "../../lib/protocol";
 import { loadAccountWorkspace, readingForWorkspace, saveWorkspace, track } from "../../lib/clientData";
 import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
 import { vaultFor } from "../../lib/vault";
@@ -175,6 +175,40 @@ function ProtocolInner() {
     return ok;
   };
 
+  const setExecutionStatus = async (day, statusValue) => {
+    const planDay = days.find((item) => item.day === day);
+    if (!planDay || planDay.moveKind !== "Real-world test") return;
+    if (statusValue === "complete" && (!evidence[day]?.output?.trim() || !evidence[day]?.signal)) {
+      setOpenDay(day);
+      setCompletionMessage({ [day]: "Add what you produced and choose an outcome signal before completing this test." });
+      return;
+    }
+    const nextEvidence = {
+      ...evidence,
+      [day]: {
+        ...(evidence[day] || {}),
+        status: statusValue,
+        type: evidence[day]?.type || "artifact",
+        module: planDay.module,
+        interventionId: planDay.interventionId,
+        methodVersion: planDay.methodVersion,
+      },
+    };
+    const nextChecked = { ...checked, [day]: statusValue === "complete" };
+    const ok = await saveWorkspace({ protocol_evidence: nextEvidence, protocol_checked: nextChecked });
+    if (!ok) {
+      setCompletionMessage({ [day]: "This test status could not be saved. Check the connection and try again." });
+      return;
+    }
+    setEvidence(nextEvidence);
+    setChecked(nextChecked);
+    try {
+      localStorage.setItem("tunnl-protocol-checked", JSON.stringify(nextChecked));
+    } catch (error) {}
+    setCompletionMessage({});
+    if (statusValue === "complete") track("plan_day_completed", { day });
+  };
+
   const saveCheckpoint = async (event) => {
     event.preventDefault();
     if (!checkpoint.clearestSignal.trim() || !checkpoint.friction || !checkpoint.direction) return;
@@ -215,7 +249,7 @@ function ProtocolInner() {
   }
 
   const progress = protocolProgress(checked, days);
-  const nextDay = days.find((day) => !checked[day.day]) || days[days.length - 1];
+  const nextDay = nextActionableDay(days, checked, evidence);
   const start = startDate ? new Date(`${startDate}T00:00:00`) : new Date();
   const today = new Date();
   const scheduledDay = Math.max(0, Math.min(14, Math.floor((today - start) / 86400000) + 1));
@@ -225,7 +259,7 @@ function ProtocolInner() {
   const previewThrough = Math.min(14, (nextDay?.day || 14) + 2);
   const visibleDays = showFullPlan
     ? days
-    : days.filter((day) => checked[day.day] || day.day <= previewThrough);
+    : days.filter((day) => checked[day.day] || evidence[day.day]?.status === "waiting" || day.day <= previewThrough);
   const dateForDay = (day) => {
     const date = new Date(start);
     date.setDate(date.getDate() + day - 1);
@@ -289,16 +323,18 @@ function ProtocolInner() {
             const isChecked = !!checked[d.day];
             const open = openDay === d.day;
             const onSchedule = isPreview || d.day <= scheduledDay;
-            const inSequence = d.day === 1 || checked[d.day - 1];
+            const inSequence = d.day === 1 || dayIsAdvanced(d.day - 1, checked, evidence);
             const canComplete = d.day < 14 && onSchedule && inSequence;
             const canToggle = isChecked || canComplete;
             const isCurrent = d.day === nextDay?.day;
+            const isRealWorldTest = d.moveKind === "Real-world test";
+            const executionStatus = isChecked ? "complete" : evidence[d.day]?.status || "";
             const kindLabel = { kickoff: "Kickoff", action: "Move", checkpoint: "Course Correction", integration: "Integration", close: "Close" }[d.type];
             return (
               <div id={`protocol-day-${d.day}`} key={d.day} className={`priority${open ? " open" : ""}`}>
                 <div className="priority-head" style={{ gap: 14 }}>
                   <span style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                    {canToggle ? <input
+                    {isRealWorldTest ? <span className={`execution-status ${executionStatus || "upcoming"}`}>{executionStatus || (isCurrent ? "Now" : "Upcoming")}</span> : canToggle ? <input
                         className="plan-checkbox"
                         type="checkbox"
                         checked={isChecked}
@@ -331,6 +367,12 @@ function ProtocolInner() {
                     {d.type === "action" && (
                       <div className="evidence-capture">
                         <div className="q-module">Evidence of movement</div>
+                        {evidence[d.day]?.toolResponses?.toolTitle && <p className="tool-sync-note">Synced from {evidence[d.day].toolResponses.toolTitle}</p>}
+                        {isRealWorldTest && <fieldset className="execution-fieldset"><legend>Test status</legend><div className="execution-options">{[
+                          ["started", "Started"],
+                          ["waiting", "Waiting"],
+                          ["complete", "Complete"],
+                        ].map(([value, label]) => <button disabled={!canComplete && executionStatus !== value} type="button" className={executionStatus === value ? "selected" : ""} key={value} onClick={() => setExecutionStatus(d.day, value)}>{label}</button>)}</div><p className="evidence-help">Waiting keeps this test open while you continue with the next move.</p></fieldset>}
                         <label>
                           What did you produce or learn?
                           <textarea required rows={3} value={evidence[d.day]?.output || ""} onChange={(event) => updateEvidence(d.day, "output", event.target.value)} onBlur={() => persistEvidence(evidence, d.day)} placeholder="A shipped page, customer response, decision, number, or rejected assumption." />

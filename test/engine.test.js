@@ -12,9 +12,9 @@ import {
   scoreBand,
   weakestModules,
 } from "../lib/engine.js";
-import { buildProtocol, protocolProgress } from "../lib/protocol.js";
+import { buildProtocol, dayIsAdvanced, nextActionableDay, protocolProgress } from "../lib/protocol.js";
 import { courseCorrectionMode, interventionKey, METHOD_VERSION, TUNNL_METHOD } from "../lib/methodology.js";
-import { allInterventionTracks } from "../lib/interventions.js";
+import { allInterventionTracks, suggestedResultFor } from "../lib/interventions.js";
 import { vaultFor } from "../lib/vault.js";
 
 const scoredQuestions = QUESTIONS.filter((question) => !question.context);
@@ -68,6 +68,23 @@ test("the Plan contains 14 sequenced, personalized days", () => {
 test("progress counts only completed days from the current sprint", () => {
   const progress = protocolProgress({ 1: true, 2: true, 3: false, 99: true }, Array.from({ length: 14 }, (_, index) => ({ day: index + 1 })));
   assert.deepEqual(progress, { done: 2, total: 14, pct: 14 });
+});
+
+test("waiting tests advance the Plan without counting as complete", () => {
+  const days = Array.from({ length: 4 }, (_, index) => ({ day: index + 1 }));
+  const checked = { 1: true };
+  const evidence = { 2: { status: "waiting" } };
+  assert.equal(dayIsAdvanced(2, checked, evidence), true);
+  assert.equal(nextActionableDay(days, checked, evidence).day, 3);
+  assert.deepEqual(protocolProgress(checked, days), { done: 1, total: 4, pct: 25 });
+});
+
+test("Tunnl suggests an honest result without inventing the baseline", () => {
+  const suggestion = suggestedResultFor("service", "strategy");
+  assert.equal(suggestion.metric, "Promise recognition");
+  assert.match(suggestion.baselinePrompt, /last five inquiries/i);
+  assert.match(suggestion.target, /three prospects/i);
+  assert.equal(Object.hasOwn(suggestion, "baseline"), false);
 });
 
 test("model-specific tracks remove cross-model action mismatches", () => {

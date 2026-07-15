@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { buildProtocol, protocolProgress } from "../../lib/protocol";
+import { buildProtocol, nextActionableDay, protocolProgress } from "../../lib/protocol";
 import { loadAccountWorkspace, readingForWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
 import { TUNNL_METHOD } from "../../lib/methodology";
-import { interventionFor } from "../../lib/interventions";
+import { suggestedResultFor } from "../../lib/interventions";
 import StarterNav from "../components/StarterNav";
 
 export default function Account() {
@@ -110,12 +110,24 @@ export default function Account() {
     ? buildProtocol(result.memo, { ...result.profile, ...(workspace?.setup || {}) })
     : [];
   const progress = protocolProgress(checked, days);
-  const nextDay = days.find((day) => !checked[day.day]);
+  const nextDay = days.length
+    ? nextActionableDay(days, checked, workspace?.protocol_evidence || {})
+    : null;
   const needsSetup = me.unlocked && result && workspace && !workspace.protocol_start_date;
   const primaryPriority = result?.memo?.priorities?.[0];
-  const primaryIntervention = primaryPriority
-    ? primaryPriority.intervention || interventionFor(result.profile?.business_model || "creator", primaryPriority.module)
+  const suggestedResult = primaryPriority
+    ? suggestedResultFor(result.profile?.business_model || "creator", primaryPriority.module)
     : null;
+
+  const useSuggestedResult = () => {
+    if (!suggestedResult) return;
+    setSetup((current) => ({
+      ...current,
+      targetMetric: suggestedResult.metric,
+      targetValue: suggestedResult.target,
+    }));
+    window.setTimeout(() => document.getElementById("sprint-baseline")?.focus(), 0);
+  };
 
   const startPlan = async (event) => {
     event.preventDefault();
@@ -181,9 +193,9 @@ export default function Account() {
             <label>What are you moving forward?<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="Launch my first paid workshop" /></label>
             <label>Who is it for?<input required value={setup.audience} onChange={(event) => setSetup({ ...setup, audience: event.target.value })} placeholder="Independent designers building an audience" /></label>
             <fieldset className="sprint-target-fields"><legend>A result to watch</legend>
-              {primaryIntervention && <p className="target-suggestion"><strong>Tunnl suggests measuring:</strong> {primaryIntervention.baseline}<br /><strong>Movement would look like:</strong> {primaryIntervention.passSignal}</p>}
+              {suggestedResult && <div className="target-suggestion"><strong>Tunnl&apos;s suggested result</strong><span>{suggestedResult.metric}</span><small>{suggestedResult.target}</small><button type="button" onClick={useSuggestedResult}>Use Tunnl&apos;s suggested result</button></div>}
               <label>What result will you watch?<input required value={setup.targetMetric} onChange={(event) => setSetup({ ...setup, targetMetric: event.target.value })} placeholder="Weekly client inquiries" /></label>
-              <label>What is true today?<input required value={setup.baselineValue} onChange={(event) => setSetup({ ...setup, baselineValue: event.target.value })} placeholder="Usually one each week" /></label>
+              <label>What is true today?<small>{suggestedResult?.baselinePrompt}</small><input id="sprint-baseline" required value={setup.baselineValue} onChange={(event) => setSetup({ ...setup, baselineValue: event.target.value })} placeholder="Usually one each week" /></label>
               <label>What would meaningful progress look like by Day 14?<input required value={setup.targetValue} onChange={(event) => setSetup({ ...setup, targetValue: event.target.value })} placeholder="Three in one week" /></label>
             </fieldset>
             <label>Time available each week<select value={setup.weeklyCapacity} onChange={(event) => setSetup({ ...setup, weeklyCapacity: event.target.value })}><option>2 hours</option><option>4 hours</option><option>6 hours</option><option>8+ hours</option></select></label>
