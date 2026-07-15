@@ -231,7 +231,6 @@ h2.question {
 .day-reflection textarea { width: 100%; resize: vertical; border: 1px solid var(--ink); background: var(--paper); color: var(--ink-deep); font-family: var(--mono); font-size: 11.5px; line-height: 1.65; padding: 11px; }
 .day-reflection textarea::placeholder { color: var(--ink-soft); }
 .day-date { color: var(--ink-soft); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
-.day-context { border-left: 1px solid var(--ink); color: var(--ink-deep); font-size: 11px; line-height: 1.65; margin-top: 14px; padding-left: 12px; }
 .recovery-note { border-top: 1px solid var(--ink-faint); color: var(--ink-soft); font-size: 10px; line-height: 1.6; margin-top: 18px; padding-top: 14px; }
 .recovery-note button { border: 0; background: transparent; color: var(--ink); font-family: var(--mono); font-size: 10px; text-decoration: underline; cursor: pointer; padding: 0 0 0 6px; }
 .completion-review { border-top: 1px solid var(--ink); margin-top: 24px; padding-top: 20px; }

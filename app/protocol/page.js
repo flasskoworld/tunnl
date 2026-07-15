@@ -311,7 +311,6 @@ function ProtocolInner() {
                       {d.title}
                     </p>
                     <p className="diag" style={{ marginBottom: 0 }}>{d.detail}</p>
-                    {d.context && <p className="day-context">{d.context}</p>}
                     <div className="day-specs">
                       <div><span>Time</span><strong>{d.minutes} minutes</strong></div>
                       <div><span>Hypothesis</span><p>{d.why}</p></div>

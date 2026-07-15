@@ -60,7 +60,7 @@ test("the Plan contains 14 sequenced, personalized days", () => {
   assert.equal(days.length, 14);
   assert.equal(days[0].type, "kickoff");
   assert.equal(days.at(-1).type, "close");
-  assert.match(days[1].context, /paid design workshop/);
+  assert.equal(days.some((day) => day.context?.startsWith("Apply this to")), false);
   assert.match(days.at(-1).doneWhen, /Paid customers/);
 });
 
