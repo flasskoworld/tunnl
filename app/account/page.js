@@ -180,11 +180,11 @@ export default function Account() {
             <p>Name the project, the people it serves, and one measure Tunnl can compare on Day 14.</p>
             <label>What are you moving forward?<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="Launch my first paid workshop" /></label>
             <label>Who is it for?<input required value={setup.audience} onChange={(event) => setSetup({ ...setup, audience: event.target.value })} placeholder="Independent designers building an audience" /></label>
-            <fieldset className="sprint-target-fields"><legend>Your Sprint Target</legend>
+            <fieldset className="sprint-target-fields"><legend>A result to watch</legend>
               {primaryIntervention && <p className="target-suggestion"><strong>Tunnl suggests measuring:</strong> {primaryIntervention.baseline}<br /><strong>Movement would look like:</strong> {primaryIntervention.passSignal}</p>}
-              <label>What are you measuring?<input required value={setup.targetMetric} onChange={(event) => setSetup({ ...setup, targetMetric: event.target.value })} placeholder="Qualified conversations" /></label>
-              <label>Where is it now?<input required value={setup.baselineValue} onChange={(event) => setSetup({ ...setup, baselineValue: event.target.value })} placeholder="2 per month" /></label>
-              <label>What would movement look like by Day 14?<input required value={setup.targetValue} onChange={(event) => setSetup({ ...setup, targetValue: event.target.value })} placeholder="6 qualified conversations" /></label>
+              <label>What result will you watch?<input required value={setup.targetMetric} onChange={(event) => setSetup({ ...setup, targetMetric: event.target.value })} placeholder="Weekly client inquiries" /></label>
+              <label>What is true today?<input required value={setup.baselineValue} onChange={(event) => setSetup({ ...setup, baselineValue: event.target.value })} placeholder="Usually one each week" /></label>
+              <label>What would meaningful progress look like by Day 14?<input required value={setup.targetValue} onChange={(event) => setSetup({ ...setup, targetValue: event.target.value })} placeholder="Three in one week" /></label>
             </fieldset>
             <label>Time available each week<select value={setup.weeklyCapacity} onChange={(event) => setSetup({ ...setup, weeklyCapacity: event.target.value })}><option>2 hours</option><option>4 hours</option><option>6 hours</option><option>8+ hours</option></select></label>
             <label>Start date<input required type="date" value={setup.startDate} onChange={(event) => setSetup({ ...setup, startDate: event.target.value })} /></label>

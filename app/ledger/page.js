@@ -141,7 +141,7 @@ export default function Ledger() {
           <div><span>01 · What was the constraint?</span><strong>{moduleLabel(primary.module)}</strong><p>{primary.diagnosis}</p></div>
           <div><span>02 · What did you try?</span><strong>{evidenceEntries.length ? `${evidenceEntries.length} evidence-producing moves` : "Nothing recorded yet"}</strong><p>{triedModules.length ? triedModules.map(moduleLabel).join(", ") : `Planned: ${memo.priorities.map((priority) => moduleLabel(priority.module)).join(", ")}`}</p></div>
           <div><span>03 · What evidence appeared?</span><strong>{evidenceEntries.length ? `${movementCount} of ${evidenceEntries.length} recorded moves created movement` : "No evidence recorded yet"}</strong><p>{review.strongestResult || evidenceEntries[0]?.[1]?.output || "Evidence will appear here as action days are completed."}</p></div>
-          <div><span>04 · Did the target move?</span><strong>{targetStatus}</strong><p>{workspace?.setup?.targetMetric || "Sprint measure"}: {workspace?.setup?.baselineValue || "starting value not recorded"}{" -> "}{review.actualValue || "in progress"} · Target {workspace?.setup?.targetValue || "not recorded"}</p></div>
+          <div><span>04 · Did the result improve?</span><strong>{targetStatus}</strong><p>{workspace?.setup?.targetMetric || "Result watched"} · Started at {workspace?.setup?.baselineValue || "not recorded"} · Now {review.actualValue || "in progress"} · Day 14 goal {workspace?.setup?.targetValue || "not recorded"}</p></div>
           <div><span>05 · What should happen next?</span><strong>{nextMoveTitle}</strong><p>{nextMoveDetail}</p></div>
         </section>
 

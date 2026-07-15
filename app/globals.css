@@ -314,10 +314,6 @@ h2.question {
 .tool-title small { color: var(--ink-soft); font-family: var(--mono); font-size: 9px; line-height: 1.55; margin-top: 5px; }
 .tool-library-toggle { margin-bottom: 14px; }
 .tool-library { margin-top: 10px; }
-.sprint-target-context { background: var(--paper); border: 1px solid var(--ink); margin-bottom: 20px; padding: 13px 14px; }
-.sprint-target-context span, .sprint-target-context strong { display: block; }
-.sprint-target-context span { color: var(--ink-soft); font-size: 8px; letter-spacing: 0.14em; margin-bottom: 6px; text-transform: uppercase; }
-.sprint-target-context strong { color: var(--ink); font-family: var(--serif); font-size: 18px; font-weight: 400; }
 .tool-guidance { border-top: 1px solid var(--ink); margin-bottom: 26px; }
 .tool-guidance > .q-module { margin: 14px 0 4px; }
 .tool-guidance > div:not(.q-module) { display: grid; gap: 14px; grid-template-columns: 130px minmax(0, 1fr); padding: 11px 0; border-bottom: 1px solid var(--ink-faint); }

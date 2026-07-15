@@ -6,7 +6,7 @@ import { legacyPrefillVaultValues, vaultFor } from "../../lib/vault";
 import { loadAccountWorkspace, readingForWorkspace, saveWorkspace } from "../../lib/clientData";
 import StarterNav from "../components/StarterNav";
 
-function ToolCard({ module, model, open, onToggle, setup, values, setField, persistValues }) {
+function ToolCard({ module, model, open, onToggle, values, setField, persistValues }) {
   const tool = vaultFor(module.key, model);
   if (!tool) return null;
   const coreGuidance = tool.guidance?.slice(1, 2) || [];
@@ -19,7 +19,6 @@ function ToolCard({ module, model, open, onToggle, setup, values, setField, pers
       </button>
       {open && (
         <div className="priority-body">
-          <div className="sprint-target-context"><span>Sprint Target</span><strong>{setup.targetMetric || "Sprint measure"}: {setup.baselineValue || "starting point"} → {setup.targetValue || "Day 14 target"}</strong></div>
           <section className="tool-guidance"><div className="q-module">Tunnl recommends</div>{coreGuidance.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</section>
           <section className="tool-response">
             <div className="q-module">Your response</div>
@@ -40,7 +39,6 @@ export default function Vault() {
   const [result, setResult] = useState(null);
   const [sourceDay, setSourceDay] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
-  const [setup, setSetup] = useState({});
   const [isPreview, setIsPreview] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
 
@@ -65,7 +63,6 @@ export default function Vault() {
       const priorityKeys = selectedResult ? weakestModules(selectedResult.scores, 3) : [];
       if (requestedTool && !priorityKeys.includes(requestedTool)) setShowLibrary(true);
       setResult(selectedResult);
-      setSetup(selectedSetup);
       setValues(migrated);
     };
     const previewingStarter =
@@ -142,18 +139,18 @@ export default function Vault() {
           <p className="copy soft">Start with the tools selected for this sprint. Tunnl provides the recommendation; you record the decision and evidence.</p>
         </div>
 
-        {sourceDay && openModule && <div className="tool-from-day"><span>Day {sourceDay}</span><p>This tool supports today&apos;s move. Your Sprint Target stays visible for context, while the tool records its own starting evidence.</p></div>}
+        {sourceDay && openModule && <div className="tool-from-day"><span>Day {sourceDay}</span><p>This tool supports today&apos;s move and records the evidence specific to this decision.</p></div>}
         {saveStatus && <div className={`save-status${saveStatus === "Saved" ? " saved" : ""}`}>{saveStatus}</div>}
 
         <div className="tool-section-label"><span>For this sprint</span><strong>{result ? weakestModules(result.scores, 3).length : 0} recommended</strong></div>
         <div className="tool-list">
-          {MODULES.filter((module) => result && weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} setup={setup} values={values} setField={setField} persistValues={persistValues} />)}
+          {MODULES.filter((module) => result && weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}
         </div>
 
         <button className="outline-toggle tool-library-toggle" type="button" onClick={() => setShowLibrary((current) => !current)}>
           {showLibrary ? "Hide additional tools" : "More Decision Tools"}<span>{MODULES.length - (result ? weakestModules(result.scores, 3).length : 0)} available</span>
         </button>
-        {showLibrary && <div className="tool-list tool-library">{MODULES.filter((module) => !result || !weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} setup={setup} values={values} setField={setField} persistValues={persistValues} />)}</div>}
+        {showLibrary && <div className="tool-list tool-library">{MODULES.filter((module) => !result || !weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}</div>}
 
         <Link href={isPreview ? "/protocol?preview=starter" : "/protocol"} className="quiet-link">Return to today&apos;s move</Link>
 

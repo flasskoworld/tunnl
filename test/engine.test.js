@@ -61,7 +61,8 @@ test("the Plan contains 14 sequenced, personalized days", () => {
   assert.equal(days[0].type, "kickoff");
   assert.equal(days.at(-1).type, "close");
   assert.equal(days.some((day) => day.context?.startsWith("Apply this to")), false);
-  assert.match(days.at(-1).doneWhen, /Paid customers/);
+  assert.doesNotMatch(JSON.stringify(days), /Sprint Target|movement means|Paid customers starts at/);
+  assert.match(days.at(-1).doneWhen, /strongest result/);
 });
 
 test("progress counts only completed days from the current sprint", () => {
