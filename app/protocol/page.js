@@ -7,6 +7,7 @@ import { buildProtocol, protocolProgress } from "../../lib/protocol";
 import { loadAccountWorkspace, readingForWorkspace, saveWorkspace, track } from "../../lib/clientData";
 import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
 import { vaultFor } from "../../lib/vault";
+import StarterNav from "../components/StarterNav";
 
 function ProtocolInner() {
   const params = useSearchParams();
@@ -23,6 +24,7 @@ function ProtocolInner() {
   const [planProfile, setPlanProfile] = useState({});
   const [isPreview, setIsPreview] = useState(false);
   const [completionMessage, setCompletionMessage] = useState({});
+  const [showFullPlan, setShowFullPlan] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -218,6 +220,12 @@ function ProtocolInner() {
   const today = new Date();
   const scheduledDay = Math.max(0, Math.min(14, Math.floor((today - start) / 86400000) + 1));
   const missedDays = nextDay ? Math.max(0, scheduledDay - nextDay.day) : 0;
+  const hasStarted = progress.done > 0 || Object.keys(evidence).length > 0 || Object.keys(notes).length > 0;
+  const showRecovery = hasStarted && nextDay?.day > 1 && missedDays > 0;
+  const previewThrough = Math.min(14, (nextDay?.day || 14) + 2);
+  const visibleDays = showFullPlan
+    ? days
+    : days.filter((day) => checked[day.day] || day.day <= previewThrough);
   const dateForDay = (day) => {
     const date = new Date(start);
     date.setDate(date.getDate() + day - 1);
@@ -239,9 +247,10 @@ function ProtocolInner() {
           <span className="num">№ 002</span>
         </div>
         <div className="rule" />
+        <StarterNav current="plan" preview={isPreview} />
 
         <div style={{ padding: "26px 0 8px" }}>
-          <div className="q-module">Commissioned</div>
+          <div className="q-module">Your sprint</div>
           <h1 className="serif" style={{ fontSize: "clamp(40px, 9vw, 60px)", lineHeight: 1, marginBottom: 14 }}>
             Your 14-Day Plan
           </h1>
@@ -259,7 +268,7 @@ function ProtocolInner() {
             <h2>{nextDay.title}</h2>
             <p>{nextDay.detail}</p>
             <button className="btn" onClick={() => openToday(nextDay.day)}>Open today&apos;s move</button>
-            {missedDays > 0 && <div className="recovery-note">Life interrupted the schedule. Nothing is lost.<button onClick={recoverSchedule}>Continue from today</button></div>}
+            {showRecovery && <div className="recovery-note">Your plan is still intact.<button onClick={recoverSchedule}>Resume with today as the next step</button></div>}
           </section>
         )}
 
@@ -276,33 +285,33 @@ function ProtocolInner() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 40 }}>
-          {days.map((d) => {
+          {visibleDays.map((d) => {
             const isChecked = !!checked[d.day];
             const open = openDay === d.day;
             const onSchedule = isPreview || d.day <= scheduledDay;
             const inSequence = d.day === 1 || checked[d.day - 1];
             const canComplete = d.day < 14 && onSchedule && inSequence;
             const canToggle = isChecked || canComplete;
+            const isCurrent = d.day === nextDay?.day;
             const kindLabel = { kickoff: "Kickoff", action: "Move", checkpoint: "Course Correction", integration: "Integration", close: "Close" }[d.type];
             return (
               <div id={`protocol-day-${d.day}`} key={d.day} className={`priority${open ? " open" : ""}`}>
                 <div className="priority-head" style={{ gap: 14 }}>
                   <span style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                    <input
-                      className="plan-checkbox"
-                      type="checkbox"
-                      checked={isChecked}
-                      disabled={!canToggle}
-                      aria-label={`Mark Day ${d.day} complete`}
-                      title={d.day === 14 ? "Complete the Day 14 review to finish the sprint." : !onSchedule ? "This day opens on its scheduled date." : !inSequence ? "Complete the previous day first." : ""}
-                      onChange={() => toggle(d.day)}
-                    />
+                    {canToggle ? <input
+                        className="plan-checkbox"
+                        type="checkbox"
+                        checked={isChecked}
+                        aria-label={`Mark Day ${d.day} complete`}
+                        title={d.day === 14 ? "Complete the Day 14 review to finish the sprint." : ""}
+                        onChange={() => toggle(d.day)}
+                      /> : <span className="day-status" aria-label={`Day ${d.day} upcoming`}>{isCurrent ? "Now" : "Upcoming"}</span>}
                     <span className="title" style={{ fontSize: 20 }}>
                       Day {d.day} — {kindLabel}
                     </span>
                     <span className="day-date">{dateForDay(d.day)}</span>
                   </span>
-                  <button className="day-open" type="button" onClick={() => setOpenDay(open ? null : d.day)} aria-expanded={open}>{open ? "Close —" : "Open +"}</button>
+                  <button className="day-open" type="button" onClick={() => setOpenDay(open ? null : d.day)} aria-expanded={open}>{open ? "Close —" : isCurrent ? "Open +" : "Preview +"}</button>
                 </div>
                 {completionMessage[d.day] && <p className="completion-message">{completionMessage[d.day]}</p>}
                 {open && (
@@ -373,14 +382,15 @@ function ProtocolInner() {
               </div>
             );
           })}
+          {!showFullPlan && visibleDays.length < days.length && (
+            <button className="outline-toggle" type="button" onClick={() => setShowFullPlan(true)}>
+              View the full 14-day outline <span>{days.length - visibleDays.length} later days</span>
+            </button>
+          )}
+          {showFullPlan && <button className="outline-toggle" type="button" onClick={() => setShowFullPlan(false)}>Show only what&apos;s next</button>}
         </div>
 
-        <div style={{ maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
-          <Link href="/account" className="btn full">Starter home</Link>
-          <Link href="/vault" className="btn ghost full">Open Decision Tools</Link>
-          <Link href="/ledger" className="btn ghost full">View Sprint Report</Link>
-          <Link href="/memo" className="btn ghost full">Back to the memo</Link>
-        </div>
+        <Link href="/memo" className="quiet-link">Review the original reading</Link>
 
         <div style={{ marginTop: 52 }}>
           <div className="rule" />

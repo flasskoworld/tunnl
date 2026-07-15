@@ -5,6 +5,7 @@ import { buildProtocol, protocolProgress } from "../../lib/protocol";
 import { loadAccountWorkspace, readingForWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
 import { TUNNL_METHOD } from "../../lib/methodology";
 import { interventionFor } from "../../lib/interventions";
+import StarterNav from "../components/StarterNav";
 
 export default function Account() {
   const [me, setMe] = useState(null);
@@ -161,8 +162,9 @@ export default function Account() {
           <span className="num">{me.email}</span>
         </div>
         <div className="rule" />
+        {me.unlocked && <StarterNav current="home" preview={isPreview} />}
         <div style={{ padding: "26px 0 8px" }}>
-          <div className="q-module">Your operating system</div>
+          <div className="q-module">Your workspace</div>
           <h1 className="serif" style={{ fontSize: "clamp(40px, 9vw, 60px)", lineHeight: 1, marginBottom: 14 }}>
             {needsSetup ? "Set your direction." : me.unlocked ? "Continue the work." : "Your reading is ready."}
           </h1>
@@ -204,12 +206,12 @@ export default function Account() {
               <section className="account-resume"><h2>Bring your reading into Starter.</h2><p>Run the diagnostic to create your 14-Day Plan and recommended Decision Tools.</p><Link href="/diagnostic" className="btn">Run the diagnostic</Link></section>
             )}
 
-            <div className="eyebrow">Starter ecosystem</div>
-            <nav className="ecosystem-grid" aria-label="Starter ecosystem">
+            <div className="eyebrow">Starter workspace</div>
+            <nav className="ecosystem-grid" aria-label="Starter workspace">
               <Link href="/protocol?preview=starter"><span>01</span><strong>14-Day Plan</strong><p>Your focused daily path from insight to evidence.</p></Link>
               <Link href="/vault?preview=starter"><span>02</span><strong>Decision Tools</strong><p>Guided worksheets for the choices behind the work.</p></Link>
               <Link href="/memo"><span>03</span><strong>Reading</strong><p>Your diagnosis, strengths, and three priorities.</p></Link>
-              <Link href="/ledger?preview=starter"><span>04</span><strong>Sprint Report</strong><p>Your starting point, completed work, and what changed.</p></Link>
+              <Link href="/ledger?preview=starter"><span>04</span><strong>{checked[14] ? "Sprint Report" : "Live Sprint Record"}</strong><p>Your starting point, completed work, and what changed.</p></Link>
             </nav>
             <section className="method-home">
               <div className="q-module">How Tunnl works</div>

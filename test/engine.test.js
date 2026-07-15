@@ -15,7 +15,7 @@ import {
 import { buildProtocol, protocolProgress } from "../lib/protocol.js";
 import { courseCorrectionMode, interventionKey, METHOD_VERSION, TUNNL_METHOD } from "../lib/methodology.js";
 import { allInterventionTracks } from "../lib/interventions.js";
-import { prefillVaultValues, vaultFor } from "../lib/vault.js";
+import { vaultFor } from "../lib/vault.js";
 
 const scoredQuestions = QUESTIONS.filter((question) => !question.context);
 
@@ -78,14 +78,12 @@ test("model-specific tracks remove cross-model action mismatches", () => {
   assert.match(serviceNetwork.moves[2].detail, /clients|partners|introduction/i);
 });
 
-test("recommended Decision Tools inherit and prefill the intervention", () => {
-  const result = buildFallbackMemo("OPERATOR", ["network", "strategy", "building"], { business_model: "product" });
-  const wrapped = { profile: { business_model: "product" }, memo: result };
+test("recommended Decision Tools separate guidance from user evidence", () => {
   const tool = vaultFor("network", "product");
-  const values = prefillVaultValues(wrapped, { targetMetric: "Activated users", baselineValue: "2", targetValue: "8" });
   assert.match(tool.subtitle, /product-native invitation loop/);
-  assert.match(values["network:1"], /Activated users: 2 -> 8/);
-  assert.match(values["network:4"], /accepted invitations/);
+  assert.match(tool.fields[0].label, /qualified users.*existing user/i);
+  assert.match(tool.guidance.find((item) => item.label === "Real-world test").value, /accepted invitations/);
+  assert.ok(tool.fields.every((field) => field.key));
 });
 
 test("the Plan respects a smaller weekly time budget", () => {

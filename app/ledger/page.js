@@ -7,6 +7,7 @@ import { asciiBar } from "../../lib/ascii";
 import { loadAccountWorkspace, readingForWorkspace } from "../../lib/clientData";
 import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
 import { interventionFor } from "../../lib/interventions";
+import StarterNav from "../components/StarterNav";
 
 export default function Ledger() {
   const [unlocked, setUnlocked] = useState(null);
@@ -15,6 +16,8 @@ export default function Ledger() {
   const [editionNo, setEditionNo] = useState("0001");
   const [workspace, setWorkspace] = useState(null);
   const [readings, setReadings] = useState([]);
+  const [showDetails, setShowDetails] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
 
   useEffect(() => {
     const previewingStarter =
@@ -23,6 +26,7 @@ export default function Ledger() {
         localStorage.getItem("tunnl-dev-starter-preview") === "true");
     if (previewingStarter) {
       localStorage.setItem("tunnl-dev-starter-preview", "true");
+      setIsPreview(true);
       setUnlocked(true);
       const previewWorkspace = JSON.parse(localStorage.getItem("tunnl-dev-workspace") || "{}");
       loadLedgerData({ workspace: previewWorkspace, readings: [] });
@@ -83,7 +87,8 @@ export default function Ledger() {
   const baseline = baselineIndex >= 0 ? readings[baselineIndex].result : result;
   const latest = baselineIndex > 0 ? readings[0].result : result;
   const review = workspace?.completion_review || {};
-  const completedCount = Object.values(workspace?.protocol_checked || {}).filter(Boolean).length;
+  const checkedDays = workspace?.protocol_checked || {};
+  const completedCount = Object.entries(checkedDays).filter(([day, done]) => Number(day) >= 1 && Number(day) <= 14 && done).length;
   const reflectionEntries = Object.entries(workspace?.protocol_notes || {}).filter(([, value]) => String(value).trim());
   const evidenceEntries = Object.entries(workspace?.protocol_evidence || {}).filter(([, value]) => value?.output);
   const movementCount = evidenceEntries.filter(([, value]) => ["strong", "some"].includes(value.signal)).length;
@@ -93,44 +98,55 @@ export default function Ledger() {
   const moduleLabel = (k) => MODULES.find((m) => m.key === k)?.label || k;
   const primary = memo.priorities[0];
   const primaryTrack = primary.intervention || interventionFor(result.profile?.business_model || "creator", primary.module);
+  const sprintComplete = !!checkedDays[14] && !!review.actualValue && !!review.targetStatus;
   const targetStatus = {
     exceeded: "Exceeded the target",
     met: "Met the target",
     moved: "Moved, but did not reach the target",
     unchanged: "Did not move yet",
     unmeasured: "Could not be measured",
-  }[review.targetStatus] || "Not completed yet";
+  }[review.targetStatus] || "In progress";
   const triedModules = [...new Set(evidenceEntries.map(([, entry]) => entry.module).filter(Boolean))];
-  const nextMove = review.nextCommitment || primary.nextMove || primaryTrack.nextMove || "Complete the sprint review to choose the next move.";
+  const nextPlanDay = days.find((day) => !checkedDays[day.day]);
+  const nextMoveTitle = sprintComplete
+    ? review.nextCommitment || primary.nextMove || primaryTrack.nextMove
+    : nextPlanDay?.title || "Complete the sprint review";
+  const nextMoveDetail = sprintComplete
+    ? review.unresolved ? `Still unresolved: ${review.unresolved}` : "The final review turns the evidence into the next commitment."
+    : nextPlanDay?.detail || "Finish the review to choose the next move.";
+  const recordTitle = sprintComplete ? "Your Sprint Report" : "Your Live Sprint Record";
 
   return (
     <>
       <div className="no-print" style={{ display: "flex", justifyContent: "center", padding: "20px 20px 0" }}>
         <div style={{ width: "100%", maxWidth: 680, display: "flex", gap: 10, marginBottom: 10 }}>
-          <button className="btn" onClick={() => window.print()}>Save as PDF / Print</button>
-          <Link href="/protocol" className="btn ghost">Back to Plan</Link>
+          {sprintComplete ? <button className="btn" onClick={() => window.print()}>Save final report</button> : <Link href={isPreview ? "/protocol?preview=starter" : "/protocol"} className="btn">Continue today&apos;s move</Link>}
+          <Link href={isPreview ? "/account?preview=starter" : "/account"} className="btn ghost">Starter home</Link>
         </div>
       </div>
 
       <main className="ledger-page">
         <div className="ledger-header">
-          <span>TUNNL — SPRINT REPORT</span>
+          <span>TUNNL — {sprintComplete ? "SPRINT REPORT" : "LIVE SPRINT RECORD"}</span>
           <span>№ {editionNo} · {date}</span>
         </div>
         <div className="ledger-rule" />
+        <StarterNav current="record" preview={isPreview} />
 
-        <h1 className="ledger-h1">Your Sprint Report</h1>
-        <p className="ledger-sub">{arch.line}</p>
+        <h1 className="ledger-h1">{recordTitle}</h1>
+        <p className="ledger-sub">{sprintComplete ? arch.line : `${completedCount} of 14 days complete. This record updates as evidence appears.`}</p>
 
         <div className="ledger-label">The result, in five questions</div>
         <section className="report-answers">
           <div><span>01 · What was the constraint?</span><strong>{moduleLabel(primary.module)}</strong><p>{primary.diagnosis}</p></div>
-          <div><span>02 · What did you try?</span><strong>{evidenceEntries.length ? `${evidenceEntries.length} evidence-producing moves` : "The intervention is still in progress"}</strong><p>{triedModules.length ? triedModules.map(moduleLabel).join(", ") : memo.priorities.map((priority) => moduleLabel(priority.module)).join(", ")}</p></div>
-          <div><span>03 · What evidence appeared?</span><strong>{movementCount} of {evidenceEntries.length || 0} recorded moves created movement</strong><p>{review.strongestResult || evidenceEntries[0]?.[1]?.output || "Evidence will appear here as action days are completed."}</p></div>
+          <div><span>02 · What did you try?</span><strong>{evidenceEntries.length ? `${evidenceEntries.length} evidence-producing moves` : "Nothing recorded yet"}</strong><p>{triedModules.length ? triedModules.map(moduleLabel).join(", ") : `Planned: ${memo.priorities.map((priority) => moduleLabel(priority.module)).join(", ")}`}</p></div>
+          <div><span>03 · What evidence appeared?</span><strong>{evidenceEntries.length ? `${movementCount} of ${evidenceEntries.length} recorded moves created movement` : "No evidence recorded yet"}</strong><p>{review.strongestResult || evidenceEntries[0]?.[1]?.output || "Evidence will appear here as action days are completed."}</p></div>
           <div><span>04 · Did the target move?</span><strong>{targetStatus}</strong><p>{workspace?.setup?.targetMetric || "Sprint measure"}: {workspace?.setup?.baselineValue || "starting value not recorded"}{" -> "}{review.actualValue || "in progress"} · Target {workspace?.setup?.targetValue || "not recorded"}</p></div>
-          <div><span>05 · What should happen next?</span><strong>{nextMove}</strong><p>{review.unresolved ? `Still unresolved: ${review.unresolved}` : "The final review turns the evidence into the next commitment."}</p></div>
+          <div><span>05 · What should happen next?</span><strong>{nextMoveTitle}</strong><p>{nextMoveDetail}</p></div>
         </section>
 
+        <button className="report-details-toggle no-print" type="button" onClick={() => setShowDetails((current) => !current)}>{showDetails ? "Hide supporting details" : "View supporting details"}<span>{sprintComplete ? "Full diagnosis and plan" : "Reading, method, and plan"}</span></button>
+        <div className={`report-appendix${showDetails ? " open" : ""}`}>
         <div className="ledger-label">Before → After</div>
         <div className="sprint-summary">
           <div><span>Starting average</span><strong>{boardAverage(baseline.scores)}</strong></div>
@@ -256,6 +272,7 @@ export default function Ledger() {
             ))}
           </tbody>
         </table>
+        </div>
 
         <div className="ledger-footer">
           <span>TUNNL — The Tunnel OS</span>
