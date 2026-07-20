@@ -434,7 +434,7 @@ function ProtocolInner() {
           {showFullPlan && <button className="outline-toggle" type="button" onClick={() => setShowFullPlan(false)}>Show only what&apos;s next</button>}
         </div>
 
-        <Link href="/memo" className="quiet-link">Review the original reading</Link>
+        <Link href={isPreview ? "/memo?preview=starter" : "/memo"} className="quiet-link">Review the original reading</Link>
 
         <div style={{ marginTop: 52 }}>
           <div className="rule" />

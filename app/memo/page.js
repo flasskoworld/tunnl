@@ -38,11 +38,15 @@ export default function Memo() {
     } catch (e) {
       setMissing(true);
     }
-    const previewingStarter =
-      process.env.NODE_ENV === "development" &&
-      localStorage.getItem("tunnl-dev-starter-preview") === "true";
+    const previewMode = new URLSearchParams(window.location.search).get("preview");
+    const previewingStarter = process.env.NODE_ENV === "development" && previewMode === "starter";
+    const previewingFree = process.env.NODE_ENV === "development" && previewMode === "free";
     if (previewingStarter) {
       setUnlocked(true);
+      return;
+    }
+    if (previewingFree) {
+      setUnlocked(false);
       return;
     }
     fetch("/api/me")
@@ -175,17 +179,18 @@ export default function Memo() {
             const locked = i > 0 && !unlocked;
             const open = expanded === i && !locked;
             return (
-              <div key={i} className={`priority${open ? " open" : ""}`}>
+              <div key={i} className={`priority${open ? " open" : ""}${locked ? " locked" : ""}`}>
                 <button
                   className="priority-head"
                   onClick={() => !locked && setExpanded(open ? -1 : i)}
-                  style={{ cursor: locked ? "default" : "pointer" }}
+                  disabled={locked}
+                  aria-label={locked ? `${moduleLabel(p.module)} priority — included with Starter` : undefined}
                 >
                   <span className="title">
                     {i + 1}. {moduleLabel(p.module)}
                   </span>
                   <span className="state" style={{ color: locked ? "var(--ink-soft)" : "var(--ink)" }}>
-                    {locked ? "▚ Starter" : open ? "Close —" : "Open +"}
+                    {locked ? "Locked" : open ? "Close —" : "Open +"}
                   </span>
                 </button>
                 {open && (
@@ -201,7 +206,9 @@ export default function Memo() {
                 )}
                 {locked && (
                   <Link href="/checkout" className="locked-note locked-link">
-                    Full diagnosis + 14-day plan unlocks at Starter — $49 →
+                    <strong>Included with Starter</strong>
+                    <span>Unlock the complete diagnosis, Decision Tools, and your personalized 14-Day Plan.</span>
+                    <em>View Starter →</em>
                   </Link>
                 )}
               </div>

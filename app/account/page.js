@@ -226,7 +226,7 @@ export default function Account() {
             <nav className="ecosystem-grid" aria-label="Starter workspace">
               <Link href="/protocol?preview=starter"><span>01</span><strong>14-Day Plan</strong><p>Your focused daily path from insight to evidence.</p></Link>
               <Link href="/vault?preview=starter"><span>02</span><strong>Decision Tools</strong><p>Guided worksheets for the choices behind the work.</p></Link>
-              <Link href="/memo"><span>03</span><strong>Reading</strong><p>Your diagnosis, strengths, and three priorities.</p></Link>
+              <Link href={isPreview ? "/memo?preview=starter" : "/memo"}><span>03</span><strong>Reading</strong><p>Your diagnosis, strengths, and three priorities.</p></Link>
               <Link href="/ledger?preview=starter"><span>04</span><strong>{checked[14] ? "Sprint Report" : "Live Sprint Record"}</strong><p>Your starting point, completed work, and what changed.</p></Link>
             </nav>
             <section className="method-home">
