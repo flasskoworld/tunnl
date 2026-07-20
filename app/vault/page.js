@@ -7,8 +7,8 @@ import { buildProtocol } from "../../lib/protocol";
 import { loadAccountWorkspace, previewWorkspaceForReading, readingForWorkspace, saveWorkspace } from "../../lib/clientData";
 import StarterNav from "../components/StarterNav";
 
-function ToolCard({ module, model, focusProject, open, onToggle, values, setField, persistValues }) {
-  const tool = vaultFor(module.key, model, { focusProject });
+function ToolCard({ module, model, focusProject, projectBrief, open, onToggle, values, setField, persistValues }) {
+  const tool = vaultFor(module.key, model, { focusProject, projectBrief });
   if (!tool) return null;
   const coreGuidance = tool.guidance?.slice(1, 2) || [];
   const playbook = tool.guidance ? [tool.guidance[0], ...tool.guidance.slice(2)] : [];
@@ -46,6 +46,7 @@ export default function Vault() {
   const [linkedEvidence, setLinkedEvidence] = useState({});
   const [linkedPlanDay, setLinkedPlanDay] = useState(null);
   const [focusProject, setFocusProject] = useState("");
+  const [projectBrief, setProjectBrief] = useState("");
   const saveTimer = useRef(null);
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function Vault() {
       setResult(selectedResult);
       setValues(migrated);
       setFocusProject(selectedSetup.focusProject || selectedResult?.profile?.focusProject || "");
+      setProjectBrief(selectedSetup.projectBrief || selectedResult?.profile?.projectBrief || "");
       const planDays = selectedResult?.memo
         ? buildProtocol(selectedResult.memo, { ...selectedResult.profile, ...selectedSetup }, workspace.course_correction || {})
         : [];
@@ -125,7 +127,7 @@ export default function Vault() {
     let nextEvidence = linkedEvidence;
     const isLinked = linkedPlanDay?.toolKey === moduleKey && linkedPlanDay?.type === "action";
     if (isLinked) {
-      const tool = vaultFor(moduleKey, result?.profile?.business_model, { focusProject });
+      const tool = vaultFor(moduleKey, result?.profile?.business_model, { focusProject, projectBrief });
       const toolResponses = Object.fromEntries(tool.fields.map((field) => [
         field.key,
         nextValues[`${moduleKey}:response:${field.key}`] || "",
@@ -194,13 +196,13 @@ export default function Vault() {
 
         <div className="tool-section-label"><span>For this sprint</span><strong>{result ? weakestModules(result.scores, 3).length : 0} recommended</strong></div>
         <div className="tool-list">
-          {MODULES.filter((module) => result && weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} focusProject={focusProject} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}
+          {MODULES.filter((module) => result && weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} focusProject={focusProject} projectBrief={projectBrief} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}
         </div>
 
         <button className="outline-toggle tool-library-toggle" type="button" onClick={() => setShowLibrary((current) => !current)}>
           {showLibrary ? "Hide additional tools" : "More Decision Tools"}<span>{MODULES.length - (result ? weakestModules(result.scores, 3).length : 0)} available</span>
         </button>
-        {showLibrary && <div className="tool-list tool-library">{MODULES.filter((module) => !result || !weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} focusProject={focusProject} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}</div>}
+        {showLibrary && <div className="tool-list tool-library">{MODULES.filter((module) => !result || !weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} focusProject={focusProject} projectBrief={projectBrief} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}</div>}
 
         <Link href={isPreview ? "/protocol?preview=starter" : "/protocol"} className="quiet-link">Return to today&apos;s move</Link>
 

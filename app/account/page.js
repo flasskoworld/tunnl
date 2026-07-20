@@ -14,6 +14,8 @@ export default function Account() {
   const [workspace, setWorkspace] = useState(null);
   const [isPreview, setIsPreview] = useState(false);
   const [setup, setSetup] = useState({
+    projectBrief: "",
+    projectIntent: "",
     focusProject: "",
     audience: "",
     targetMetric: "",
@@ -37,7 +39,12 @@ export default function Account() {
       const progress = localStorage.getItem("tunnl-protocol-checked");
       setResult(localResult);
       if (localResult?.profile?.focusProject) {
-        setSetup((current) => ({ ...current, focusProject: localResult.profile.focusProject }));
+        setSetup((current) => ({
+          ...current,
+          projectBrief: localResult.profile.projectBrief || "",
+          projectIntent: localResult.profile.projectIntent || "",
+          focusProject: localResult.profile.focusProject,
+        }));
       }
       setChecked(progress ? JSON.parse(progress) : {});
     } catch (e) {}
@@ -56,6 +63,8 @@ export default function Account() {
         setSetup((current) => ({
           ...current,
           ...(currentPreview.setup || {}),
+          projectBrief: currentPreview.setup?.projectBrief || localResult?.profile?.projectBrief || current.projectBrief,
+          projectIntent: currentPreview.setup?.projectIntent || localResult?.profile?.projectIntent || current.projectIntent,
           focusProject: currentPreview.setup?.focusProject || localResult?.profile?.focusProject || current.focusProject,
         }));
       }
@@ -76,6 +85,8 @@ export default function Account() {
             setSetup((current) => ({
               ...current,
               ...(accountData.workspace?.setup || {}),
+              projectBrief: accountData.workspace?.setup?.projectBrief || restored?.profile?.projectBrief || current.projectBrief,
+              projectIntent: accountData.workspace?.setup?.projectIntent || restored?.profile?.projectIntent || current.projectIntent,
               focusProject: accountData.workspace?.setup?.focusProject || restored?.profile?.focusProject || current.focusProject,
               startDate: accountData.workspace?.protocol_start_date || current.startDate,
             }));
@@ -202,8 +213,9 @@ export default function Account() {
           <form className="plan-setup" onSubmit={startPlan}>
             <div className="q-module">Set up your sprint</div>
             <h2>Make the next 14 days specific.</h2>
-            <p>Name the project, the people it serves, and one measure Tunnl can compare on Day 14.</p>
-            <label>What are you moving forward?<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="Describe the project from your diagnostic" /></label>
+            <p>Review Tunnl&apos;s recommended focus, name the people it serves, and choose one result to compare on Day 14.</p>
+            {setup.projectBrief && <div className="target-suggestion"><strong>{setup.projectIntent || "Your work"}</strong><span>{setup.projectBrief}</span><small>Tunnl selected a focused outcome from the work you described.</small></div>}
+            <label>Recommended 14-day focus<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="One focused outcome for the next 14 days" /></label>
             <label>Who is it for?<input required value={setup.audience} onChange={(event) => setSetup({ ...setup, audience: event.target.value })} placeholder="Independent designers building an audience" /></label>
             <fieldset className="sprint-target-fields"><legend>A result to watch</legend>
               {suggestedResult && <div className="target-suggestion"><strong>Tunnl&apos;s suggested result</strong><span>{suggestedResult.metric}</span><small>{suggestedResult.target}</small><button type="button" onClick={useSuggestedResult}>Use Tunnl&apos;s suggested result</button></div>}

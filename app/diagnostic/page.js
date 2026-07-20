@@ -16,6 +16,7 @@ import {
 } from "../../lib/engine";
 import { asciiBar } from "../../lib/ascii";
 import { syncReading, track } from "../../lib/clientData";
+import { recommendedSprintContext } from "../../lib/projectBrief";
 
 const TOTAL_QUESTIONS = 15;
 const MODEL_LABELS = { creator: "Creator", service: "Service", community: "Community", product: "Product" };
@@ -90,6 +91,7 @@ export default function Diagnostic() {
     const archetype = classify(scores);
     const weak = weakestModules(scores, 3);
     const fields = Object.fromEntries(answers.filter((answer) => answer?.field).map((answer) => [answer.field, answer.value]));
+    const sprint = recommendedSprintContext(fields.projectBrief, { model, primaryModule: weak[0] });
     const profile = {
       business_model: model,
       building: MODEL_LABELS[model].toLowerCase(),
@@ -98,7 +100,9 @@ export default function Diagnostic() {
       weeklyCapacity: fields.weeklyCapacity,
       recentEvidence: fields.recentEvidence,
       self_diagnosed_blocker: fields.blocker,
-      focusProject: fields.focusProject,
+      projectBrief: fields.projectBrief,
+      projectIntent: sprint.category,
+      focusProject: sprint.focus,
       archetype: ARCHETYPES[archetype].name,
       scores,
       three_weakest_modules: weak,

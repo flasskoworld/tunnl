@@ -18,7 +18,7 @@ import { courseCorrectionMode, interventionKey, METHOD_VERSION, TUNNL_METHOD } f
 import { allInterventionTracks, suggestedResultFor } from "../lib/interventions.js";
 import { vaultFor } from "../lib/vault.js";
 import { previewWorkspaceForReading } from "../lib/clientData.js";
-import { projectBriefContext } from "../lib/projectBrief.js";
+import { projectBriefContext, recommendedSprintContext } from "../lib/projectBrief.js";
 
 const scoredQuestions = QUESTIONS.filter((question) => !question.context);
 
@@ -91,12 +91,46 @@ test("a new diagnostic gets a clean dev preview workspace", () => {
   };
   const next = previewWorkspaceForReading(oldWorkspace, {
     id: "new-reading",
-    profile: { focusProject: "Build a client research repository" },
+    profile: { business_model: "product", focusProject: "Build a client research repository" },
   });
   assert.equal(next.setup.readingId, "new-reading");
-  assert.equal(next.setup.focusProject, "Build a client research repository");
+  assert.equal(next.setup.projectBrief, "Build a client research repository");
+  assert.equal(next.setup.projectIntent, "Product validation");
+  assert.equal(next.setup.focusProject, "Test one product assumption with target users and decide what to build next.");
   assert.deepEqual(next.protocol_checked, {});
   assert.deepEqual(next.protocol_evidence, {});
+});
+
+test("Tunnl derives a category-level sprint instead of echoing the project brief", () => {
+  const service = recommendedSprintContext("providing AI services for others", {
+    model: "service",
+    primaryModule: "strategy",
+  });
+  const community = recommendedSprintContext("improve member participation in my private community", {
+    model: "community",
+    primaryModule: "network",
+  });
+  assert.equal(service.category, "Offer and revenue");
+  assert.equal(service.focus, "Validate one service offer for one best-fit buyer and create a real buying signal.");
+  assert.notEqual(service.focus.toLowerCase(), service.brief.toLowerCase());
+  assert.equal(community.category, "Audience and participation");
+  assert.match(community.focus, /participation loop/i);
+  assert.notEqual(service.focus, community.focus);
+});
+
+test("an existing dev preview migrates a legacy raw focus without erasing its work", () => {
+  const workspace = {
+    setup: { readingId: "same-reading", focusProject: "providing AI services for others" },
+    protocol_checked: { 1: true },
+  };
+  const next = previewWorkspaceForReading(workspace, {
+    id: "same-reading",
+    profile: { business_model: "service", focusProject: "providing AI services for others" },
+    memo: { priorities: [{ module: "strategy" }] },
+  });
+  assert.equal(next.setup.projectBrief, "providing AI services for others");
+  assert.equal(next.setup.focusProject, "Validate one service offer for one best-fit buyer and create a real buying signal.");
+  assert.deepEqual(next.protocol_checked, { 1: true });
 });
 
 test("the written project brief changes the sprint commission", () => {
@@ -125,12 +159,16 @@ test("model-specific tracks remove cross-model action mismatches", () => {
 });
 
 test("recommended Decision Tools separate guidance from user evidence", () => {
-  const tool = vaultFor("network", "product", { focusProject: "Launch a collaborative research workspace" });
+  const tool = vaultFor("network", "product", {
+    focusProject: "Test one product assumption with target users and decide what to build next.",
+    projectBrief: "Launch a collaborative research workspace",
+  });
   assert.match(tool.subtitle, /product-native invitation loop/);
   assert.match(tool.fields[0].label, /qualified users.*existing user/i);
   assert.match(tool.guidance.find((item) => item.label === "Real-world test").value, /accepted invitations/);
   assert.ok(tool.fields.every((field) => field.key));
-  assert.equal(tool.focusProject, "Launch a collaborative research workspace");
+  assert.equal(tool.focusProject, "Test one product assumption with target users and decide what to build next.");
+  assert.equal(tool.projectIntent, "Launch");
   assert.match(tool.fields.find((field) => field.key === "decision").label, /this work/);
 });
 
