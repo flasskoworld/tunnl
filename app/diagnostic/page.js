@@ -7,6 +7,7 @@ import {
   UNIVERSAL_QUESTIONS,
   MODEL_BRANCHES,
   FOLLOW_UPS,
+  WORK_QUESTION,
   ARCHETYPES,
   computeScores,
   classify,
@@ -44,8 +45,8 @@ export default function Diagnostic() {
     setAnswers(nextAnswers);
 
     if (step === 11 && questions.length === 12) {
-      const weak = weakestModules(computeScores(nextAnswers), 3);
-      setQuestions([...questions, ...weak.map((key) => FOLLOW_UPS[key])]);
+      const weak = weakestModules(computeScores(nextAnswers), 2);
+      setQuestions([...questions, ...weak.map((key) => FOLLOW_UPS[key]), WORK_QUESTION]);
       setStep(12);
       return;
     }
@@ -53,6 +54,23 @@ export default function Diagnostic() {
       setStep(step + 1);
       return;
     }
+    setPhase("review");
+  };
+
+  const updateWrittenAnswer = (value) => {
+    const question = questions[step];
+    const nextAnswers = [...answers];
+    nextAnswers[step] = { id: question.id, text: value, value, field: question.field, w: {} };
+    setAnswers(nextAnswers);
+  };
+
+  const submitWrittenAnswer = (event) => {
+    event.preventDefault();
+    const value = answers[step]?.value?.trim();
+    if (!value || value.length < 12) return;
+    const nextAnswers = [...answers];
+    nextAnswers[step] = { ...nextAnswers[step], text: value, value };
+    setAnswers(nextAnswers);
     setPhase("review");
   };
 
@@ -80,6 +98,7 @@ export default function Diagnostic() {
       weeklyCapacity: fields.weeklyCapacity,
       recentEvidence: fields.recentEvidence,
       self_diagnosed_blocker: fields.blocker,
+      focusProject: fields.focusProject,
       archetype: ARCHETYPES[archetype].name,
       scores,
       three_weakest_modules: weak,
@@ -97,6 +116,7 @@ export default function Diagnostic() {
   useEffect(() => {
     if (phase !== "model" && phase !== "quiz") return undefined;
     const onKeyDown = (event) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
       const index = event.key.toLowerCase().charCodeAt(0) - 97;
       const option = currentQuestion?.options?.[index];
       if (index >= 0 && option) {
@@ -130,14 +150,14 @@ export default function Diagnostic() {
   }
 
   const isModel = phase === "model";
-  const pct = isModel ? 0 : Math.round((step / TOTAL_QUESTIONS) * 100);
+  const pct = isModel ? 0 : Math.round(((step + 1) / TOTAL_QUESTIONS) * 100);
   return (
     <main className="shell"><div className="col">
       <div className="top"><div className="eyebrow">TUNNL · Diagnostic</div><span className="num">{isModel ? "Start" : `${String(step + 1).padStart(2, "0")}/${TOTAL_QUESTIONS}`}</span></div>
       {!isModel && <div className="progress">{asciiBar(pct, 40)}</div>}
       <div className="q-module">{isModel ? "Choose your path" : `Module — ${currentQuestion.eyebrow}`}</div>
       <h2 className="question">{currentQuestion.q}</h2>
-      <div>{currentQuestion.options.map((opt, index) => <button key={opt.t} className={`option${!isModel && answers[step]?.text === opt.t ? " selected" : ""}`} onClick={() => isModel ? selectModel(opt.v) : recordAnswer(opt)}><span className="key">[{String.fromCharCode(97 + index)}]</span><span>{opt.t}</span></button>)}<div className="rule" /></div>
+      {currentQuestion.textInput ? <form className="diagnostic-written" onSubmit={submitWrittenAnswer}><p>{currentQuestion.prompt}</p><textarea autoFocus maxLength={600} rows={7} value={answers[step]?.value || ""} onChange={(event) => updateWrittenAnswer(event.target.value)} placeholder={currentQuestion.placeholder} /><div className="written-meta"><span>{answers[step]?.value?.length || 0}/600</span><button className="btn" type="submit" disabled={(answers[step]?.value?.trim().length || 0) < 12}>Continue to review</button></div></form> : <div>{currentQuestion.options.map((opt, index) => <button key={opt.t} className={`option${!isModel && answers[step]?.text === opt.t ? " selected" : ""}`} onClick={() => isModel ? selectModel(opt.v) : recordAnswer(opt)}><span className="key">[{String.fromCharCode(97 + index)}]</span><span>{opt.t}</span></button>)}<div className="rule" /></div>}
       {!isModel && <button className="diagnostic-back" onClick={goBack}>← Back</button>}
     </div></main>
   );

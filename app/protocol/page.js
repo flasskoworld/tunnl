@@ -291,6 +291,7 @@ function ProtocolInner() {
           <p className="copy soft">
             One focused move at a time, built from your reading.
           </p>
+          {planProfile.focusProject && <div className="sprint-focus"><span>Sprint focus</span><p>{planProfile.focusProject}</p></div>}
         </div>
 
         {nextDay && (
@@ -356,6 +357,7 @@ function ProtocolInner() {
                       {d.title}
                     </p>
                     <p className="diag" style={{ marginBottom: 0 }}>{d.detail}</p>
+                    {d.sprintFocus && <div className="day-focus"><span>Applied to</span><p>{d.sprintFocus}</p></div>}
                     <div className="day-specs">
                       <div><span>Time</span><strong>{d.minutes} minutes</strong></div>
                       <div><span>Hypothesis</span><p>{d.why}</p></div>

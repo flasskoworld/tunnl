@@ -159,6 +159,14 @@ h2.question {
 }
 .option:hover { background: var(--ink-wash); }
 .option .key { color: var(--ink); font-size: 12px; flex-shrink: 0; }
+.diagnostic-written { border-top: 1px solid var(--ink); padding-top: 18px; }
+.diagnostic-written > p { color: var(--ink-soft); font-size: 11px; line-height: 1.7; margin-bottom: 14px; }
+.diagnostic-written textarea { background: var(--paper); border: 1px solid var(--ink); border-radius: 0; color: var(--ink-deep); font-family: var(--mono); font-size: 13px; line-height: 1.7; padding: 14px; resize: vertical; width: 100%; }
+.diagnostic-written textarea::placeholder { color: var(--ink-soft); opacity: 0.68; }
+.written-meta { align-items: center; display: flex; justify-content: space-between; gap: 14px; margin-top: 10px; }
+.written-meta > span { color: var(--ink-soft); font-size: 9px; }
+.written-meta .btn { padding: 12px 16px; }
+.written-meta .btn:disabled { cursor: not-allowed; opacity: 0.38; }
 
 /* ── memo / results ── */
 .verdict-box {
@@ -308,6 +316,11 @@ h2.question {
 .execution-options button:disabled { cursor: not-allowed; opacity: 0.35; }
 .execution-fieldset .evidence-help { margin-top: 8px; }
 .tool-sync-note { border-left: 2px solid var(--ink); color: var(--ink-soft); font-size: 9px; margin: 12px 0; padding-left: 9px; }
+.sprint-focus { border-left: 2px solid var(--ink); margin-top: 20px; padding: 2px 0 2px 12px; }
+.sprint-focus span, .day-focus span, .tool-focus span { color: var(--ink-soft); display: block; font-size: 8px; letter-spacing: 0.12em; margin-bottom: 5px; text-transform: uppercase; }
+.sprint-focus p, .day-focus p, .tool-focus p { color: var(--ink); font-family: var(--serif); font-size: 18px; line-height: 1.35; }
+.day-focus { background: var(--ink-wash); margin-top: 14px; padding: 12px; }
+.tool-focus { border-left: 2px solid var(--ink); margin-bottom: 20px; padding-left: 12px; }
 .tool-from-day { border: 1px solid var(--ink); display: grid; grid-template-columns: 70px minmax(0, 1fr); margin: 8px 0 24px; padding: 14px; }
 .tool-from-day span { color: var(--ink); font-family: var(--serif); font-size: 18px; }
 .tool-from-day p { color: var(--ink-soft); font-size: 9px; line-height: 1.6; }
@@ -498,6 +511,8 @@ h2.question {
   .tool-playbook > div { grid-template-columns: 1fr; gap: 5px; }
   .tool-title strong { font-size: 21px; }
   .tool-title small { font-size: 9.5px; }
+  .written-meta { align-items: stretch; flex-direction: column; }
+  .written-meta .btn { width: 100%; }
   .priority-head { align-items: flex-start; }
   .day-date { display: none; }
 }

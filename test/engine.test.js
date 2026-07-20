@@ -6,6 +6,7 @@ import {
   MODEL_BRANCHES,
   UNIVERSAL_QUESTIONS,
   FOLLOW_UPS,
+  WORK_QUESTION,
   buildFallbackMemo,
   classify,
   computeScores,
@@ -63,6 +64,7 @@ test("the Plan contains 14 sequenced, personalized days", () => {
   assert.equal(days.some((day) => day.context?.startsWith("Apply this to")), false);
   assert.doesNotMatch(JSON.stringify(days), /Sprint Target|movement means|Paid customers starts at/);
   assert.match(days.at(-1).doneWhen, /strongest result/);
+  assert.ok(days.filter((day) => day.type === "action").every((day) => day.sprintFocus === "a paid design workshop"));
 });
 
 test("progress counts only completed days from the current sprint", () => {
@@ -97,11 +99,13 @@ test("model-specific tracks remove cross-model action mismatches", () => {
 });
 
 test("recommended Decision Tools separate guidance from user evidence", () => {
-  const tool = vaultFor("network", "product");
+  const tool = vaultFor("network", "product", { focusProject: "Launch a collaborative research workspace" });
   assert.match(tool.subtitle, /product-native invitation loop/);
   assert.match(tool.fields[0].label, /qualified users.*existing user/i);
   assert.match(tool.guidance.find((item) => item.label === "Real-world test").value, /accepted invitations/);
   assert.ok(tool.fields.every((field) => field.key));
+  assert.equal(tool.focusProject, "Launch a collaborative research workspace");
+  assert.match(tool.fields.find((field) => field.key === "decision").label, /this work/);
 });
 
 test("the Plan respects a smaller weekly time budget", () => {
@@ -142,9 +146,11 @@ test("each business model produces a 15-question adaptive path", () => {
     const base = [...UNIVERSAL_QUESTIONS, ...branch];
     const answers = base.map((question) => ({ id: question.id, text: question.options[0].t, w: question.options[0].w }));
     const weak = weakestModules(computeScores(answers), 3);
-    const full = [...base, ...weak.map((key) => FOLLOW_UPS[key])];
+    const full = [...base, ...weak.slice(0, 2).map((key) => FOLLOW_UPS[key]), WORK_QUESTION];
     assert.equal(full.length, 15);
     assert.equal(new Set(full.map((question) => question.id)).size, 15);
+    assert.equal(full.at(-1).textInput, true);
+    assert.equal(full.at(-1).context, true);
   });
 });
 
@@ -155,11 +161,13 @@ test("the reading combines model, stage, evidence, and constraint context", () =
     recentEvidence: "market signal",
     self_diagnosed_blocker: "Audience",
     twelve_month_destination: "paying product",
+    focusProject: "Launch a paid research workshop for independent designers",
   });
   assert.match(memo.memo[1], /service business is at early revenue/);
   assert.match(memo.priorities[0].diagnosis, /service business/);
   assert.equal(memo.priorities[0].intervention.model, "service");
   assert.equal(memo.priorities[0].intervention.module, "strategy");
+  assert.match(memo.memo.join(" "), /paid research workshop/);
 });
 
 test("every model and module has a complete evidence-producing intervention", () => {

@@ -7,8 +7,8 @@ import { buildProtocol } from "../../lib/protocol";
 import { loadAccountWorkspace, readingForWorkspace, saveWorkspace } from "../../lib/clientData";
 import StarterNav from "../components/StarterNav";
 
-function ToolCard({ module, model, open, onToggle, values, setField, persistValues }) {
-  const tool = vaultFor(module.key, model);
+function ToolCard({ module, model, focusProject, open, onToggle, values, setField, persistValues }) {
+  const tool = vaultFor(module.key, model, { focusProject });
   if (!tool) return null;
   const coreGuidance = tool.guidance?.slice(1, 2) || [];
   const playbook = tool.guidance ? [tool.guidance[0], ...tool.guidance.slice(2)] : [];
@@ -20,6 +20,7 @@ function ToolCard({ module, model, open, onToggle, values, setField, persistValu
       </button>
       {open && (
         <div className="priority-body">
+          {tool.focusProject && <section className="tool-focus"><span>Sprint focus</span><p>{tool.focusProject}</p></section>}
           <section className="tool-guidance"><div className="q-module">Tunnl recommends</div>{coreGuidance.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</section>
           <section className="tool-response">
             <div className="q-module">Your response</div>
@@ -44,6 +45,7 @@ export default function Vault() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [linkedEvidence, setLinkedEvidence] = useState({});
   const [linkedPlanDay, setLinkedPlanDay] = useState(null);
+  const [focusProject, setFocusProject] = useState("");
   const saveTimer = useRef(null);
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export default function Vault() {
       if (requestedTool && !priorityKeys.includes(requestedTool)) setShowLibrary(true);
       setResult(selectedResult);
       setValues(migrated);
+      setFocusProject(selectedSetup.focusProject || selectedResult?.profile?.focusProject || "");
       const planDays = selectedResult?.memo
         ? buildProtocol(selectedResult.memo, { ...selectedResult.profile, ...selectedSetup }, workspace.course_correction || {})
         : [];
@@ -120,7 +123,7 @@ export default function Vault() {
     let nextEvidence = linkedEvidence;
     const isLinked = linkedPlanDay?.toolKey === moduleKey && linkedPlanDay?.type === "action";
     if (isLinked) {
-      const tool = vaultFor(moduleKey, result?.profile?.business_model);
+      const tool = vaultFor(moduleKey, result?.profile?.business_model, { focusProject });
       const toolResponses = Object.fromEntries(tool.fields.map((field) => [
         field.key,
         nextValues[`${moduleKey}:response:${field.key}`] || "",
@@ -189,13 +192,13 @@ export default function Vault() {
 
         <div className="tool-section-label"><span>For this sprint</span><strong>{result ? weakestModules(result.scores, 3).length : 0} recommended</strong></div>
         <div className="tool-list">
-          {MODULES.filter((module) => result && weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}
+          {MODULES.filter((module) => result && weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} focusProject={focusProject} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}
         </div>
 
         <button className="outline-toggle tool-library-toggle" type="button" onClick={() => setShowLibrary((current) => !current)}>
           {showLibrary ? "Hide additional tools" : "More Decision Tools"}<span>{MODULES.length - (result ? weakestModules(result.scores, 3).length : 0)} available</span>
         </button>
-        {showLibrary && <div className="tool-list tool-library">{MODULES.filter((module) => !result || !weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}</div>}
+        {showLibrary && <div className="tool-list tool-library">{MODULES.filter((module) => !result || !weakestModules(result.scores, 3).includes(module.key)).map((module) => <ToolCard key={module.key} module={module} model={result?.profile?.business_model} focusProject={focusProject} open={openModule === module.key} onToggle={() => setOpenModule(openModule === module.key ? null : module.key)} values={values} setField={setField} persistValues={persistValues} />)}</div>}
 
         <Link href={isPreview ? "/protocol?preview=starter" : "/protocol"} className="quiet-link">Return to today&apos;s move</Link>
 

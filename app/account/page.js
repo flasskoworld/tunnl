@@ -36,6 +36,9 @@ export default function Account() {
       localResult = saved ? JSON.parse(saved) : null;
       const progress = localStorage.getItem("tunnl-protocol-checked");
       setResult(localResult);
+      if (localResult?.profile?.focusProject) {
+        setSetup((current) => ({ ...current, focusProject: localResult.profile.focusProject }));
+      }
       setChecked(progress ? JSON.parse(progress) : {});
     } catch (e) {}
 
@@ -64,6 +67,7 @@ export default function Account() {
             setSetup((current) => ({
               ...current,
               ...(accountData.workspace?.setup || {}),
+              focusProject: accountData.workspace?.setup?.focusProject || restored?.profile?.focusProject || current.focusProject,
               startDate: accountData.workspace?.protocol_start_date || current.startDate,
             }));
             setResult(restored);
