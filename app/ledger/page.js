@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MODULES, scoreBand, boardAverage, weakestModules, ARCHETYPES } from "../../lib/engine";
 import { buildProtocol } from "../../lib/protocol";
 import { asciiBar } from "../../lib/ascii";
-import { loadAccountWorkspace, readingForWorkspace } from "../../lib/clientData";
+import { loadAccountWorkspace, previewWorkspaceForReading, readingForWorkspace } from "../../lib/clientData";
 import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
 import { interventionFor } from "../../lib/interventions";
 import StarterNav from "../components/StarterNav";
@@ -28,7 +28,11 @@ export default function Ledger() {
       localStorage.setItem("tunnl-dev-starter-preview", "true");
       setIsPreview(true);
       setUnlocked(true);
-      const previewWorkspace = JSON.parse(localStorage.getItem("tunnl-dev-workspace") || "{}");
+      const raw = localStorage.getItem("tunnl-result");
+      const localResult = raw ? JSON.parse(raw) : null;
+      const storedPreview = JSON.parse(localStorage.getItem("tunnl-dev-workspace") || "{}");
+      const previewWorkspace = previewWorkspaceForReading(storedPreview, localResult);
+      if (previewWorkspace !== storedPreview) localStorage.setItem("tunnl-dev-workspace", JSON.stringify(previewWorkspace));
       loadLedgerData({ workspace: previewWorkspace, readings: [] });
       return;
     }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { buildProtocol, nextActionableDay, protocolProgress } from "../../lib/protocol";
-import { loadAccountWorkspace, readingForWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
+import { loadAccountWorkspace, previewWorkspaceForReading, readingForWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
 import { TUNNL_METHOD } from "../../lib/methodology";
 import { suggestedResultFor } from "../../lib/interventions";
 import StarterNav from "../components/StarterNav";
@@ -49,7 +49,16 @@ export default function Account() {
       const savedPreview = localStorage.getItem("tunnl-dev-workspace");
       const previewWorkspace = savedPreview ? JSON.parse(savedPreview) : null;
       if (previewMode === "setup") setWorkspace({ protocol_start_date: null, setup: {} });
-      else setWorkspace(previewWorkspace || { protocol_start_date: null, setup: {} });
+      else {
+        const currentPreview = previewWorkspaceForReading(previewWorkspace || {}, localResult);
+        if (currentPreview !== previewWorkspace) localStorage.setItem("tunnl-dev-workspace", JSON.stringify(currentPreview));
+        setWorkspace(currentPreview);
+        setSetup((current) => ({
+          ...current,
+          ...(currentPreview.setup || {}),
+          focusProject: currentPreview.setup?.focusProject || localResult?.profile?.focusProject || current.focusProject,
+        }));
+      }
     } else {
     fetch("/api/me")
       .then((r) => r.json())
@@ -194,7 +203,7 @@ export default function Account() {
             <div className="q-module">Set up your sprint</div>
             <h2>Make the next 14 days specific.</h2>
             <p>Name the project, the people it serves, and one measure Tunnl can compare on Day 14.</p>
-            <label>What are you moving forward?<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="Launch my first paid workshop" /></label>
+            <label>What are you moving forward?<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="Describe the project from your diagnostic" /></label>
             <label>Who is it for?<input required value={setup.audience} onChange={(event) => setSetup({ ...setup, audience: event.target.value })} placeholder="Independent designers building an audience" /></label>
             <fieldset className="sprint-target-fields"><legend>A result to watch</legend>
               {suggestedResult && <div className="target-suggestion"><strong>Tunnl&apos;s suggested result</strong><span>{suggestedResult.metric}</span><small>{suggestedResult.target}</small><button type="button" onClick={useSuggestedResult}>Use Tunnl&apos;s suggested result</button></div>}

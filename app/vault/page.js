@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MODULES, weakestModules } from "../../lib/engine";
 import { legacyPrefillVaultValues, vaultFor } from "../../lib/vault";
 import { buildProtocol } from "../../lib/protocol";
-import { loadAccountWorkspace, readingForWorkspace, saveWorkspace } from "../../lib/clientData";
+import { loadAccountWorkspace, previewWorkspaceForReading, readingForWorkspace, saveWorkspace } from "../../lib/clientData";
 import StarterNav from "../components/StarterNav";
 
 function ToolCard({ module, model, focusProject, open, onToggle, values, setField, persistValues }) {
@@ -20,7 +20,7 @@ function ToolCard({ module, model, focusProject, open, onToggle, values, setFiel
       </button>
       {open && (
         <div className="priority-body">
-          {tool.focusProject && <section className="tool-focus"><span>Sprint focus</span><p>{tool.focusProject}</p></section>}
+          {tool.focusProject && <section className="tool-focus"><span>Sprint focus · {tool.projectIntent}</span><p>{tool.focusProject}</p></section>}
           <section className="tool-guidance"><div className="q-module">Tunnl recommends</div>{coreGuidance.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</section>
           <section className="tool-response">
             <div className="q-module">Your response</div>
@@ -87,7 +87,9 @@ export default function Vault() {
       localStorage.setItem("tunnl-dev-starter-preview", "true");
       setIsPreview(true);
       setUnlocked(true);
-      const previewWorkspace = JSON.parse(localStorage.getItem("tunnl-dev-workspace") || "{}");
+      const storedPreview = JSON.parse(localStorage.getItem("tunnl-dev-workspace") || "{}");
+      const previewWorkspace = previewWorkspaceForReading(storedPreview, localResult);
+      if (previewWorkspace !== storedPreview) localStorage.setItem("tunnl-dev-workspace", JSON.stringify(previewWorkspace));
       applyData(localResult, previewWorkspace, previewWorkspace.vault_values || localValues);
     } else {
       fetch("/api/me")

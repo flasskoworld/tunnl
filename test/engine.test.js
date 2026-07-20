@@ -17,6 +17,8 @@ import { buildProtocol, dayIsAdvanced, nextActionableDay, protocolProgress } fro
 import { courseCorrectionMode, interventionKey, METHOD_VERSION, TUNNL_METHOD } from "../lib/methodology.js";
 import { allInterventionTracks, suggestedResultFor } from "../lib/interventions.js";
 import { vaultFor } from "../lib/vault.js";
+import { previewWorkspaceForReading } from "../lib/clientData.js";
+import { projectBriefContext } from "../lib/projectBrief.js";
 
 const scoredQuestions = QUESTIONS.filter((question) => !question.context);
 
@@ -79,6 +81,30 @@ test("waiting tests advance the Plan without counting as complete", () => {
   assert.equal(dayIsAdvanced(2, checked, evidence), true);
   assert.equal(nextActionableDay(days, checked, evidence).day, 3);
   assert.deepEqual(protocolProgress(checked, days), { done: 1, total: 4, pct: 25 });
+});
+
+test("a new diagnostic gets a clean dev preview workspace", () => {
+  const oldWorkspace = {
+    setup: { readingId: "old-reading", focusProject: "Launch a paid creator workshop" },
+    protocol_checked: { 1: true, 2: true },
+    protocol_evidence: { 2: { output: "Old work" } },
+  };
+  const next = previewWorkspaceForReading(oldWorkspace, {
+    id: "new-reading",
+    profile: { focusProject: "Build a client research repository" },
+  });
+  assert.equal(next.setup.readingId, "new-reading");
+  assert.equal(next.setup.focusProject, "Build a client research repository");
+  assert.deepEqual(next.protocol_checked, {});
+  assert.deepEqual(next.protocol_evidence, {});
+});
+
+test("the written project brief changes the sprint commission", () => {
+  const launch = projectBriefContext("Launch a paid workshop for independent designers");
+  const product = projectBriefContext("Build a client research repository for service teams");
+  assert.equal(launch.label, "Launch");
+  assert.equal(product.label, "Product validation");
+  assert.notEqual(launch.moves.test, product.moves.test);
 });
 
 test("Tunnl suggests an honest result without inventing the baseline", () => {

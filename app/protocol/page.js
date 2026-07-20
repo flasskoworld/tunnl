@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MODULES } from "../../lib/engine";
 import { buildProtocol, dayIsAdvanced, nextActionableDay, protocolProgress } from "../../lib/protocol";
-import { loadAccountWorkspace, readingForWorkspace, saveWorkspace, track } from "../../lib/clientData";
+import { loadAccountWorkspace, previewWorkspaceForReading, readingForWorkspace, saveWorkspace, track } from "../../lib/clientData";
 import { OUTCOME_SIGNALS, TUNNL_METHOD } from "../../lib/methodology";
 import { vaultFor } from "../../lib/vault";
 import StarterNav from "../components/StarterNav";
@@ -79,6 +79,13 @@ function ProtocolInner() {
         const raw = localStorage.getItem("tunnl-result");
         const localResult = raw ? JSON.parse(raw) : null;
         const saved = readingForWorkspace(accountData, localResult);
+        if (previewingStarter && saved) {
+          const currentPreview = previewWorkspaceForReading(accountData?.workspace || {}, saved);
+          if (currentPreview !== accountData?.workspace) {
+            accountData = { ...(accountData || {}), workspace: currentPreview };
+            localStorage.setItem("tunnl-dev-workspace", JSON.stringify(currentPreview));
+          }
+        }
         setResult(saved);
         if (saved?.memo) {
           const savedSetup = accountData?.workspace?.setup || {};
@@ -357,7 +364,7 @@ function ProtocolInner() {
                       {d.title}
                     </p>
                     <p className="diag" style={{ marginBottom: 0 }}>{d.detail}</p>
-                    {d.sprintFocus && <div className="day-focus"><span>Applied to</span><p>{d.sprintFocus}</p></div>}
+                    {d.sprintFocus && <div className="day-focus"><span>{d.projectIntent ? `${d.projectIntent} · Commissioned for` : "Sprint focus"}</span><p>{d.sprintFocus}</p>{d.commission && <small>{d.commission}</small>}</div>}
                     <div className="day-specs">
                       <div><span>Time</span><strong>{d.minutes} minutes</strong></div>
                       <div><span>Hypothesis</span><p>{d.why}</p></div>

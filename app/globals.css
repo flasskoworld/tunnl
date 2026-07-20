@@ -325,6 +325,7 @@ h2.question {
 .sprint-focus span, .day-focus span, .tool-focus span { color: var(--ink-soft); display: block; font-size: 8px; letter-spacing: 0.12em; margin-bottom: 5px; text-transform: uppercase; }
 .sprint-focus p, .day-focus p, .tool-focus p { color: var(--ink); font-family: var(--serif); font-size: 18px; line-height: 1.35; }
 .day-focus { background: var(--ink-wash); margin-top: 14px; padding: 12px; }
+.day-focus small { border-top: 1px solid var(--ink-faint); color: var(--ink-deep); display: block; font-size: 9px; line-height: 1.65; margin-top: 10px; padding-top: 10px; }
 .tool-focus { border-left: 2px solid var(--ink); margin-bottom: 20px; padding-left: 12px; }
 .tool-from-day { border: 1px solid var(--ink); display: grid; grid-template-columns: 70px minmax(0, 1fr); margin: 8px 0 24px; padding: 14px; }
 .tool-from-day span { color: var(--ink); font-family: var(--serif); font-size: 18px; }
