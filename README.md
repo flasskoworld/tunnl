@@ -44,6 +44,36 @@ Stripe checkout additionally requires `STRIPE_SECRET_KEY` and
 Email sign-in links are single-use, expire after 15 minutes, and are limited to
 three requests per account every 15 minutes.
 
+### Completed sprint outcomes
+
+After Day 14, users can optionally submit an outcome for publication. Submissions
+are stored privately in the `sprint_outcomes` Postgres table and are never shown
+on the landing page until `permission_to_publish` is true and `approved_at` has
+been set by an operator.
+
+Review the queue in Railway's Postgres data view, or run:
+
+```sql
+SELECT id, attribution, outcome_text, permission_to_publish, approved_at, created_at
+FROM sprint_outcomes
+ORDER BY created_at DESC;
+```
+
+Approve a genuine outcome:
+
+```sql
+UPDATE sprint_outcomes
+SET approved_at = now(), updated_at = now()
+WHERE id = 'OUTCOME_ID' AND permission_to_publish = true;
+```
+
+Remove it from the public landing page without deleting the submission:
+
+```sql
+UPDATE sprint_outcomes SET approved_at = NULL, updated_at = now()
+WHERE id = 'OUTCOME_ID';
+```
+
 ## Push to GitHub
 
 ```bash

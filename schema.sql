@@ -84,6 +84,27 @@ CREATE TABLE IF NOT EXISTS intervention_outcomes (
 CREATE INDEX IF NOT EXISTS idx_intervention_benchmarks
   ON intervention_outcomes(method_version, intervention_key, outcome_signal);
 
+CREATE TABLE IF NOT EXISTS sprint_outcomes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sprint_id TEXT NOT NULL,
+  business_model TEXT,
+  project_intent TEXT,
+  focus_project TEXT,
+  outcome_text TEXT NOT NULL,
+  result_status TEXT,
+  attribution TEXT NOT NULL DEFAULT 'Anonymous Tunnl user',
+  permission_to_publish BOOLEAN NOT NULL DEFAULT false,
+  approved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, sprint_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sprint_outcomes_public
+  ON sprint_outcomes(approved_at DESC)
+  WHERE permission_to_publish = true AND approved_at IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS product_events (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,

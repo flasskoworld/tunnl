@@ -158,6 +158,7 @@ export default function Account() {
     const { startDate, ...details } = setup;
     const sprintSetup = {
       ...details,
+      businessModel: result?.profile?.business_model,
       successMeasure: `${details.targetMetric}: ${details.baselineValue} -> ${details.targetValue}`,
       sprintId: crypto.randomUUID(),
       readingId: result?.id,

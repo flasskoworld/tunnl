@@ -25,6 +25,8 @@ function ProtocolInner() {
   const [isPreview, setIsPreview] = useState(false);
   const [completionMessage, setCompletionMessage] = useState({});
   const [showFullPlan, setShowFullPlan] = useState(false);
+  const [outcomeShare, setOutcomeShare] = useState({ outcomeText: "", attribution: "", permissionToPublish: false });
+  const [outcomeStatus, setOutcomeStatus] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -93,7 +95,9 @@ function ProtocolInner() {
           setPlanProfile(combinedProfile);
           const savedStart = accountData?.workspace?.protocol_start_date || new Date().toISOString().slice(0, 10);
           setStartDate(savedStart);
-          setReview(accountData?.workspace?.completion_review || { actualValue: "", targetStatus: "", strongestResult: "", unresolved: "", nextCommitment: "" });
+          const savedReview = accountData?.workspace?.completion_review || { actualValue: "", targetStatus: "", strongestResult: "", unresolved: "", nextCommitment: "" };
+          setReview(savedReview);
+          setOutcomeShare((current) => ({ ...current, outcomeText: savedReview.strongestResult || "" }));
           const savedCheckpoint = accountData?.workspace?.course_correction || {};
           setCheckpoint((current) => ({ ...current, ...savedCheckpoint }));
           setEvidence(accountData?.workspace?.protocol_evidence || {});
@@ -145,7 +149,36 @@ function ProtocolInner() {
     const ok = await saveWorkspace({ completion_review: review, protocol_checked: nextChecked });
     if (!ok) return;
     setChecked(nextChecked);
+    setOutcomeShare((current) => ({ ...current, outcomeText: current.outcomeText || review.strongestResult }));
     track("sprint_completed", { daysCompleted: 14 });
+  };
+
+  const submitOutcome = async (event) => {
+    event.preventDefault();
+    setOutcomeStatus("Submitting...");
+    if (isPreview) {
+      try {
+        localStorage.setItem("tunnl-dev-outcome-submission", JSON.stringify(outcomeShare));
+      } catch (error) {}
+      setOutcomeStatus("Added to the private preview queue.");
+      return;
+    }
+    try {
+      const response = await fetch("/api/outcomes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(outcomeShare),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setOutcomeStatus(data.error || "This outcome could not be submitted.");
+        return;
+      }
+      setOutcomeStatus("Submitted for review. Nothing is published automatically.");
+      track("outcome_submitted", { attribution: outcomeShare.attribution ? "credited" : "anonymous" });
+    } catch (error) {
+      setOutcomeStatus("This outcome could not be submitted. Check the connection and try again.");
+    }
   };
 
   const updateNote = (day, value) => {
@@ -417,7 +450,7 @@ function ProtocolInner() {
                         placeholder="Write down what changed, what felt difficult, or what you learned."
                       />
                     </label>}
-                    {d.day === 14 && (
+                    {d.day === 14 && !checked[14] && (
                       <form className="completion-review" onSubmit={submitReview}>
                         <div className="q-module">Complete your sprint</div>
                         <label>Where did {planProfile.targetMetric || "your measure"} finish?<input required value={review.actualValue} onChange={(event) => setReview({ ...review, actualValue: event.target.value })} placeholder={planProfile.targetValue || "The finishing value"} /></label>
@@ -426,6 +459,27 @@ function ProtocolInner() {
                         <label>What is still unresolved?<textarea required rows={3} value={review.unresolved} onChange={(event) => setReview({ ...review, unresolved: event.target.value })} /></label>
                         <label>What will you commit to next?<textarea required rows={3} value={review.nextCommitment} onChange={(event) => setReview({ ...review, nextCommitment: event.target.value })} /></label>
                         <button className="btn" type="submit">Complete sprint</button>
+                      </form>
+                    )}
+                    {d.day === 14 && checked[14] && (
+                      <form className="outcome-share" onSubmit={submitOutcome}>
+                        <div className="q-module">Optional · Share the result</div>
+                        <h3>Help another builder see what can change.</h3>
+                        <p>Your submission stays private until Tunnl reviews and approves it.</p>
+                        <label>
+                          What would you tell someone starting this sprint?
+                          <textarea required minLength={20} maxLength={600} rows={4} value={outcomeShare.outcomeText} onChange={(event) => setOutcomeShare({ ...outcomeShare, outcomeText: event.target.value })} />
+                        </label>
+                        <label>
+                          How should we credit you? <small>Leave blank to appear as Anonymous Tunnl user.</small>
+                          <input maxLength={80} value={outcomeShare.attribution} onChange={(event) => setOutcomeShare({ ...outcomeShare, attribution: event.target.value })} placeholder="First name, role, or company" />
+                        </label>
+                        <label className="outcome-permission">
+                          <input required type="checkbox" checked={outcomeShare.permissionToPublish} onChange={(event) => setOutcomeShare({ ...outcomeShare, permissionToPublish: event.target.checked })} />
+                          <span>Tunnl may publish this outcome and the credit shown above.</span>
+                        </label>
+                        <button className="btn" type="submit" disabled={outcomeStatus === "Submitting..."}>Submit outcome</button>
+                        {outcomeStatus && <p className="outcome-status">{outcomeStatus}</p>}
                       </form>
                     )}
                   </div>

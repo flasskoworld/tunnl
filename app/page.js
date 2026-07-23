@@ -1,6 +1,7 @@
 import Link from "next/link";
 import EngravingHero from "../components/EngravingHero";
 import LandingPortalLink from "../components/LandingPortalLink";
+import OutcomeEvidence from "../components/OutcomeEvidence";
 import { MODULES } from "../lib/engine";
 
 export default function Home() {
@@ -49,6 +50,8 @@ export default function Home() {
           </div>
           <div className="rule" />
         </div>
+
+        <OutcomeEvidence />
       </div>
     </main>
   );
