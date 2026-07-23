@@ -74,7 +74,7 @@ export default function Ledger() {
           <p className="copy" style={{ margin: "26px 0" }}>
             Your Sprint Report is included with Starter.
           </p>
-          <Link href="/checkout" className="btn">Start my 14-Day Plan — $49</Link>
+          <Link href="/checkout" className="btn">Start my 14-Day Plan · $49</Link>
         </div>
       </main>
     );
@@ -131,7 +131,7 @@ export default function Ledger() {
 
       <main className="ledger-page">
         <div className="ledger-header">
-          <span>TUNNL — {sprintComplete ? "SPRINT REPORT" : "LIVE SPRINT RECORD"}</span>
+          <span>TUNNL · {sprintComplete ? "SPRINT REPORT" : "LIVE SPRINT RECORD"}</span>
           <span>№ {editionNo} · {date}</span>
         </div>
         <div className="ledger-rule" />
@@ -154,12 +154,12 @@ export default function Ledger() {
         <div className="ledger-label">Before → After</div>
         <div className="sprint-summary">
           <div><span>Starting average</span><strong>{boardAverage(baseline.scores)}</strong></div>
-          <div><span>Follow-up average</span><strong>{hasFollowUp ? boardAverage(latest.scores) : "—"}</strong></div>
-          <div><span>Evidence that moved</span><strong>{movementCount}/{evidenceEntries.length || "—"}</strong></div>
+          <div><span>Follow-up average</span><strong>{hasFollowUp ? boardAverage(latest.scores) : "Not yet"}</strong></div>
+          <div><span>Evidence that moved</span><strong>{movementCount}/{evidenceEntries.length || "Not yet"}</strong></div>
         </div>
         <div className="ledger-label">The Tunnl Method · Version 1.1</div>
         <div className="method-report">{TUNNL_METHOD.map((stage, index) => <div key={stage.key}><span>{String(index + 1).padStart(2, "0")}</span><strong>{stage.label}</strong><p>{stage.description}</p></div>)}</div>
-        {checkpoint.clearestSignal && <><div className="ledger-label" style={{ marginTop: 28 }}>Day 7 Course Correction</div><div className="sprint-review"><div><span>Clearest signal</span><p>{checkpoint.clearestSignal}</p></div><div><span>Decision</span><p>{checkpoint.direction === "change" ? "Change course" : checkpoint.direction === "narrow" ? "Narrow the target" : "Continue"}{checkpoint.revisedConstraint ? ` — ${checkpoint.revisedConstraint}` : ""}</p></div></div></>}
+        {checkpoint.clearestSignal && <><div className="ledger-label" style={{ marginTop: 28 }}>Day 7 Course Correction</div><div className="sprint-review"><div><span>Clearest signal</span><p>{checkpoint.clearestSignal}</p></div><div><span>Decision</span><p>{checkpoint.direction === "change" ? "Change course" : checkpoint.direction === "narrow" ? "Narrow the target" : "Continue"}{checkpoint.revisedConstraint ? `: ${checkpoint.revisedConstraint}` : ""}</p></div></div></>}
         {(review.strongestResult || review.unresolved || review.nextCommitment) && (
           <div className="sprint-review">
             <div><span>What changed</span><p>{review.strongestResult}</p></div>
@@ -236,7 +236,7 @@ export default function Ledger() {
 
         <div className="ledger-pagebreak" />
 
-        <div className="ledger-label">Priorities — Full Diagnosis + 14-Day Actions</div>
+        <div className="ledger-label">Priorities: Full Diagnosis + 14-Day Actions</div>
         {memo.priorities.map((p, i) => (
           <div className="ledger-priority" key={i}>
             <div className="ledger-priority-title">{i + 1}. {moduleLabel(p.module)}</div>
@@ -279,7 +279,7 @@ export default function Ledger() {
         </div>
 
         <div className="ledger-footer">
-          <span>TUNNL — The Tunnel OS</span>
+          <span>TUNNL · The Tunnel OS</span>
           <span>SE HQ · Ink on paper</span>
         </div>
       </main>

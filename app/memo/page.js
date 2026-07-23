@@ -184,13 +184,13 @@ export default function Memo() {
                   className="priority-head"
                   onClick={() => !locked && setExpanded(open ? -1 : i)}
                   disabled={locked}
-                  aria-label={locked ? `${moduleLabel(p.module)} priority — included with Starter` : undefined}
+                  aria-label={locked ? `${moduleLabel(p.module)} priority, included with Starter` : undefined}
                 >
                   <span className="title">
                     {i + 1}. {moduleLabel(p.module)}
                   </span>
                   <span className="state" style={{ color: locked ? "var(--ink-soft)" : "var(--ink)" }}>
-                    {locked ? "Locked" : open ? "Close —" : "Open +"}
+                    {locked ? "Locked" : open ? "Close" : "Open +"}
                   </span>
                 </button>
                 {open && (
@@ -270,7 +270,7 @@ export default function Memo() {
           </div>
         ) : (
           <div className="memo-actions">
-            <Link href="/checkout" className="btn full">Start my 14-Day Plan — $49</Link>
+            <Link href="/checkout" className="btn full">Start my 14-Day Plan · $49</Link>
             <Link href="/signin" className="signin-link">
               Already commissioned on another device? Sign in
             </Link>
@@ -286,7 +286,7 @@ export default function Memo() {
         <div style={{ marginTop: 52 }}>
           <div className="rule" />
           <div className="footer">
-            <span>TUNNL — The Tunnel OS</span>
+            <span>TUNNL · The Tunnel OS</span>
             <span>SE HQ</span>
           </div>
         </div>

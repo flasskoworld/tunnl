@@ -23,7 +23,7 @@ export default function Checkout() {
 
   const buy = async () => {
     if (!email || !email.includes("@")) {
-      setError("Enter a valid email — that's where your account and receipt go.");
+      setError("Enter a valid email. That's where your account and receipt go.");
       return;
     }
     setLoading(true);
@@ -110,28 +110,28 @@ export default function Checkout() {
           <div className="rule" />
           <div className="note" style={{ padding: "14px 2px" }}>
             <span className="numeral">ii</span>
-            <p><strong>Your 14-Day Plan</strong> — one focused move per day, with time estimates, clear completion standards, and recovery when life interrupts.</p>
+            <p><strong>Your 14-Day Plan</strong>: one focused move per day, with time estimates, clear completion standards, and recovery when life interrupts.</p>
           </div>
           <div className="rule" />
           <div className="note" style={{ padding: "14px 2px" }}>
             <span className="numeral">iii</span>
-            <p><strong>Decision Tools</strong> — focused worksheets for positioning, money, ownership, attention, systems, and the choices behind your plan.</p>
+            <p><strong>Decision Tools</strong>: focused worksheets for positioning, money, ownership, attention, systems, and the choices behind your plan.</p>
           </div>
           <div className="rule" />
           <div className="note" style={{ padding: "14px 2px" }}>
             <span className="numeral">iv</span>
-            <p><strong>Your Sprint Report</strong> — a dated before-and-after record of your starting point, completed work, reflections, and next commitment.</p>
+            <p><strong>Your Sprint Report</strong>: a dated before-and-after record of your starting point, completed work, reflections, and next commitment.</p>
           </div>
         </div>
 
         <div className="verdict-box" style={{ marginBottom: 30 }}>
           <div className="q-module" style={{ color: "var(--ink)" }}>Price</div>
-          <p style={{ fontStyle: "normal" }}>$49 — one time. No subscription.</p>
+          <p style={{ fontStyle: "normal" }}>$49 one time. No subscription.</p>
         </div>
 
         <div className="eyebrow">Your account</div>
         <p style={{ fontSize: 12.5, color: "var(--ink-soft)", marginBottom: 12, lineHeight: 1.7 }}>
-          This creates your TUNNL account — no password. Your reading and Starter work
+          This creates your TUNNL account with no password. Your reading and Starter work
           are saved to this email and restored when you sign in.
         </p>
         <input
@@ -161,10 +161,10 @@ export default function Checkout() {
             onClick={buy}
             style={{ opacity: loading ? 0.4 : 1, cursor: loading ? "default" : "pointer" }}
           >
-            {loading ? "Opening checkout…" : "Start my 14-Day Plan — $49"}
+            {loading ? "Opening checkout…" : "Start my 14-Day Plan · $49"}
           </button>
           <div style={{ fontSize: 10, color: "var(--ink-soft)", textAlign: "center", letterSpacing: "0.08em" }}>
-            Card · Apple Pay · Google Pay · PayPal — via Stripe
+            Card · Apple Pay · Google Pay · PayPal via Stripe
           </div>
           <Link href="/memo" className="btn ghost full">Back to the memo</Link>
         </div>
@@ -172,7 +172,7 @@ export default function Checkout() {
         <div style={{ marginTop: 52 }}>
           <div className="rule" />
           <div className="footer">
-            <span>TUNNL — The Tunnel OS</span>
+            <span>TUNNL · The Tunnel OS</span>
             <span>SE HQ</span>
           </div>
         </div>

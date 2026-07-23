@@ -259,7 +259,7 @@ export default function Account() {
             </section>
           </>
         ) : (
-          <div className="memo-actions"><Link href="/checkout" className="btn full">Start my 14-Day Plan — $49</Link><Link href="/memo" className="btn ghost full">Back to the reading</Link></div>
+          <div className="memo-actions"><Link href="/checkout" className="btn full">Start my 14-Day Plan · $49</Link><Link href="/memo" className="btn ghost full">Back to the reading</Link></div>
         )}
 
         <button className="account-signout" onClick={signOut}>Sign out</button>

@@ -37,7 +37,7 @@ export async function POST(request) {
             currency: "usd",
             unit_amount: STARTER_PRICE_USD * 100,
             product_data: {
-              name: "TUNNL — Starter",
+              name: "TUNNL Starter",
               description:
                 "Your 14-Day Plan, Decision Tools, and Sprint Report. One-time purchase.",
             },

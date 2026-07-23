@@ -289,7 +289,7 @@ function ProtocolInner() {
           <p className="copy" style={{ margin: "26px 0" }}>
             Your 14-Day Plan is included with Starter.
           </p>
-          <Link href="/checkout" className="btn">Start my 14-Day Plan — $49</Link>
+          <Link href="/checkout" className="btn">Start my 14-Day Plan · $49</Link>
         </div>
       </main>
     );
@@ -391,11 +391,11 @@ function ProtocolInner() {
                         onChange={() => toggle(d.day)}
                       /> : <span className="day-status" aria-label={`Day ${d.day} upcoming`}>{isCurrent ? "Now" : "Upcoming"}</span>}
                     <span className="title" style={{ fontSize: 20 }}>
-                      Day {d.day} — {kindLabel}
+                      Day {d.day} · {kindLabel}
                     </span>
                     <span className="day-date">{dateForDay(d.day)}</span>
                   </span>
-                  <button className="day-open" type="button" onClick={() => setOpenDay(open ? null : d.day)} aria-expanded={open}>{open ? "Close —" : isCurrent ? "Open +" : "Preview +"}</button>
+                  <button className="day-open" type="button" onClick={() => setOpenDay(open ? null : d.day)} aria-expanded={open}>{open ? "Close" : isCurrent ? "Open +" : "Preview +"}</button>
                 </div>
                 {completionMessage[d.day] && <p className="completion-message">{completionMessage[d.day]}</p>}
                 {open && (
@@ -507,7 +507,7 @@ function ProtocolInner() {
         <div style={{ marginTop: 52 }}>
           <div className="rule" />
           <div className="footer">
-            <span>TUNNL — The Tunnel OS</span>
+            <span>TUNNL · The Tunnel OS</span>
             <span>SE HQ</span>
           </div>
         </div>

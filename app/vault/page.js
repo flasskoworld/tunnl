@@ -16,7 +16,7 @@ function ToolCard({ module, model, focusProject, projectBrief, open, onToggle, v
     <div className={`priority${open ? " open" : ""}`}>
       <button className="priority-head" onClick={onToggle}>
         <span className="tool-title"><strong>{tool.title}</strong><small>{tool.subtitle}</small></span>
-        <span className="state">{open ? "Close —" : "Open +"}</span>
+        <span className="state">{open ? "Close" : "Open +"}</span>
       </button>
       {open && (
         <div className="priority-body">
@@ -168,7 +168,7 @@ export default function Vault() {
           <p className="copy" style={{ margin: "26px 0" }}>
             Decision Tools are included with Starter.
           </p>
-          <Link href="/checkout" className="btn">Start my 14-Day Plan — $49</Link>
+          <Link href="/checkout" className="btn">Start my 14-Day Plan · $49</Link>
         </div>
       </main>
     );
@@ -209,7 +209,7 @@ export default function Vault() {
         <div style={{ marginTop: 52 }}>
           <div className="rule" />
           <div className="footer">
-            <span>TUNNL — The Tunnel OS</span>
+            <span>TUNNL · The Tunnel OS</span>
             <span>SE HQ</span>
           </div>
         </div>

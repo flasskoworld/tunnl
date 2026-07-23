@@ -44,7 +44,7 @@ export default function Home() {
           <div className="module-grid">
             {MODULES.map((m, i) => (
               <div key={m.key}>
-                {String(i + 1).padStart(2, "0")} — {m.label}
+                {String(i + 1).padStart(2, "0")}. {m.label}
               </div>
             ))}
           </div>

@@ -159,7 +159,7 @@ export default function Diagnostic() {
     <main className="shell"><div className="col">
       <div className="top"><div className="eyebrow">TUNNL · Diagnostic</div><span className="num">{isModel ? "Start" : `${String(step + 1).padStart(2, "0")}/${TOTAL_QUESTIONS}`}</span></div>
       {!isModel && <div className="progress">{asciiBar(pct, 40)}</div>}
-      <div className="q-module">{isModel ? "Choose your path" : `Module — ${currentQuestion.eyebrow}`}</div>
+      <div className="q-module">{isModel ? "Choose your path" : `Module · ${currentQuestion.eyebrow}`}</div>
       <h2 className="question">{currentQuestion.q}</h2>
       {currentQuestion.textInput ? <form className="diagnostic-written" onSubmit={submitWrittenAnswer}><p>{currentQuestion.prompt}</p><textarea autoFocus maxLength={600} rows={7} value={answers[step]?.value || ""} onChange={(event) => updateWrittenAnswer(event.target.value)} placeholder={currentQuestion.placeholder} /><div className="written-meta"><span>{answers[step]?.value?.length || 0}/600</span><button className="btn" type="submit" disabled={(answers[step]?.value?.trim().length || 0) < 12}>Continue to review</button></div></form> : <div>{currentQuestion.options.map((opt, index) => <button key={opt.t} className={`option${!isModel && answers[step]?.text === opt.t ? " selected" : ""}`} onClick={() => isModel ? selectModel(opt.v) : recordAnswer(opt)}><span className="key">[{String.fromCharCode(97 + index)}]</span><span>{opt.t}</span></button>)}<div className="rule" /></div>}
       {!isModel && <button className="diagnostic-back" onClick={goBack}>← Back</button>}
