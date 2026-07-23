@@ -400,23 +400,30 @@ function ProtocolInner() {
                 {completionMessage[d.day] && <p className="completion-message">{completionMessage[d.day]}</p>}
                 {open && (
                   <div className="priority-body">
-                    <p style={{ fontSize: 14, lineHeight: 1.8, fontFamily: "var(--serif)", color: "var(--ink)", marginBottom: 10 }}>
-                      {d.title}
-                    </p>
-                    <p className="diag" style={{ marginBottom: 0 }}>{d.detail}</p>
+                    <section className="day-action">
+                      <span>Required · Today, do this</span>
+                      <h3>{d.title}</h3>
+                      <p>{d.detail}</p>
+                    </section>
+                    <section className="day-finish">
+                      <span>You&apos;re done when</span>
+                      <p>{d.doneWhen}</p>
+                    </section>
                     {d.sprintFocus && <div className="day-focus"><span>{d.projectIntent ? `${d.projectIntent} · Commissioned for` : "Sprint focus"}</span><p>{d.sprintFocus}</p>{d.commission && <small>{d.commission}</small>}</div>}
-                    <div className="day-specs">
-                      <div><span>Time</span><strong>{d.minutes} minutes</strong></div>
-                      <div><span>Hypothesis</span><p>{d.why}</p></div>
-                      <div><span>Done when</span><p>{d.doneWhen}</p></div>
-                      <div><span>Notice</span><p>{d.reflection}</p></div>
-                    </div>
-                    {d.type === "action" && <div className="intervention-signals"><div><span>Starting evidence</span><p>{d.baselinePrompt}</p></div><div><span>Pass signal</span><p>{d.passSignal}</p></div><div><span>If it fails</span><p>{d.failSignal}</p></div></div>}
-                    {d.type === "action" && d.toolKey && <div className="day-tool-link"><span>Today&apos;s move uses {vaultFor(d.toolKey)?.title || "a Decision Tool"}.</span><Link className="btn ghost" href={isPreview ? `/vault?preview=starter&tool=${d.toolKey}&day=${d.day}` : `/vault?tool=${d.toolKey}&day=${d.day}`}>Open it</Link></div>}
+                    <details className="day-context">
+                      <summary>Why this move</summary>
+                      <div className="day-specs">
+                        <div><span>Time</span><strong>{d.minutes} minutes</strong></div>
+                        <div><span>Why it matters</span><p>{d.why}</p></div>
+                        <div><span>Notice</span><p>{d.reflection}</p></div>
+                      </div>
+                      {d.type === "action" && <div className="intervention-signals"><div><span>Starting evidence</span><p>{d.baselinePrompt}</p></div><div><span>Pass signal</span><p>{d.passSignal}</p></div><div><span>If it fails</span><p>{d.failSignal}</p></div></div>}
+                    </details>
+                    {d.type === "action" && d.toolKey && <div className="day-tool-link"><span><strong>Recommended Decision Tool</strong>{vaultFor(d.toolKey)?.title || "Decision Tool"}<small>Your answers return to this day automatically.</small></span><Link className="btn ghost" href={isPreview ? `/vault?preview=starter&tool=${d.toolKey}&day=${d.day}` : `/vault?tool=${d.toolKey}&day=${d.day}`}>Open tool</Link></div>}
                     {d.type === "action" && (
                       <div className="evidence-capture">
-                        <div className="q-module">Evidence of movement</div>
-                        {evidence[d.day]?.toolResponses?.toolTitle && <p className="tool-sync-note">Synced from {evidence[d.day].toolResponses.toolTitle}</p>}
+                        <div className="q-module">Required · Record the result</div>
+                        {evidence[d.day]?.toolResponses?.toolTitle && <div className="tool-sync-note"><strong>Saved from {evidence[d.day].toolResponses.toolTitle}</strong><span>This response is already attached to Day {d.day}. You can edit it here or in the tool.</span></div>}
                         {isRealWorldTest && <fieldset className="execution-fieldset"><legend>Test status</legend><div className="execution-options">{[
                           ["started", "Started"],
                           ["waiting", "Waiting"],
@@ -448,7 +455,7 @@ function ProtocolInner() {
                       </form>
                     )}
                     {d.type !== "checkpoint" && <label className="day-reflection">
-                      <span>What changed?</span>
+                      <span>Optional reflection</span>
                       <textarea
                         rows={3}
                         value={notes[d.day] || ""}

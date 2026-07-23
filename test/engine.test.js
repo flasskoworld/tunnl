@@ -67,6 +67,9 @@ test("the Plan contains 14 sequenced, personalized days", () => {
   assert.doesNotMatch(JSON.stringify(days), /Sprint Target|movement means|Paid customers starts at/);
   assert.match(days.at(-1).doneWhen, /strongest result/);
   assert.ok(days.filter((day) => day.type === "action").every((day) => day.sprintFocus === "a paid design workshop"));
+  assert.equal(days[0].title, "Create your one-line Sprint Brief");
+  assert.match(days[0].detail, /For the next 14 days/);
+  assert.ok(days.filter((day) => day.type === "action").every((day) => !day.title.includes(" - ")));
 });
 
 test("progress counts only completed days from the current sprint", () => {
@@ -170,6 +173,9 @@ test("recommended Decision Tools separate guidance from user evidence", () => {
   assert.equal(tool.focusProject, "Test one product assumption with target users and decide what to build next.");
   assert.equal(tool.projectIntent, "Launch");
   assert.match(tool.fields.find((field) => field.key === "decision").label, /this work/);
+  assert.equal(tool.fields.find((field) => field.key === "result").timing, "After testing");
+  assert.equal(tool.completedExample.length, 4);
+  assert.match(tool.completedExample[0].value, /shares|referrals|introductions|member exchanges/i);
 });
 
 test("the Plan respects a smaller weekly time budget", () => {

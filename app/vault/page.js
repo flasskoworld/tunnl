@@ -22,12 +22,19 @@ function ToolCard({ module, model, focusProject, projectBrief, open, onToggle, v
         <div className="priority-body">
           {tool.focusProject && <section className="tool-focus"><span>Sprint focus · {tool.projectIntent}</span><p>{tool.focusProject}</p></section>}
           <section className="tool-guidance"><div className="q-module">Tunnl recommends</div>{coreGuidance.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</section>
+          <details className="tool-example">
+            <summary>See a completed example</summary>
+            <div className="tool-example-body">
+              {tool.completedExample?.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}
+            </div>
+          </details>
           <section className="tool-response">
-            <div className="q-module">Your response</div>
-            {tool.fields.map((field) => <label key={field.key}><span>{field.label}</span><small>{field.prompt}</small><textarea maxLength={1500} rows={field.key === "result" ? 4 : 3} value={values[`${module.key}:response:${field.key}`] || ""} onChange={(event) => setField(module.key, field.key, event.target.value)} onBlur={(event) => persistValues(module.key, field.key, event.target.value)} placeholder="Write your response here" /></label>)}
-            <p>Responses save automatically.</p>
+            <div className="q-module">Your responses</div>
+            <p className="tool-response-intro">Complete the fields marked Use now. Return to the final field after the real-world test.</p>
+            {tool.fields.map((field) => <label key={field.key} className={field.required ? "" : "tool-field-later"}><span>{field.label}<em>{field.timing}</em></span><small>{field.prompt}</small><textarea maxLength={1500} rows={field.key === "result" ? 4 : 3} value={values[`${module.key}:response:${field.key}`] || ""} onChange={(event) => setField(module.key, field.key, event.target.value)} onBlur={(event) => persistValues(module.key, field.key, event.target.value)} placeholder="Write your response here" /></label>)}
+            <p>Responses save automatically. When opened from the Plan, they are also attached to that day.</p>
           </section>
-          <details className="tool-playbook"><summary>View the full intervention playbook</summary>{playbook.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</details>
+          <details className="tool-playbook"><summary>Optional · View the full playbook</summary>{playbook.map((item) => <div key={item.label}><span>{item.label}</span><p>{item.value}</p></div>)}</details>
         </div>
       )}
     </div>
@@ -191,7 +198,7 @@ export default function Vault() {
           <p className="copy soft">Start with the tools selected for this sprint. Tunnl provides the recommendation; you record the decision and evidence.</p>
         </div>
 
-        {sourceDay && openModule && <div className="tool-from-day"><span>Day {sourceDay}</span><p>This tool supports today&apos;s move and records the evidence specific to this decision.</p></div>}
+        {sourceDay && openModule && <div className="tool-from-day"><span>Day {sourceDay}</span><p>Complete the response below. Each answer saves automatically to this Plan day under Evidence of movement.</p></div>}
         {saveStatus && <div className={`save-status${saveStatus.startsWith("Saved") ? " saved" : ""}`}>{saveStatus}</div>}
 
         <div className="tool-section-label"><span>For this sprint</span><strong>{result ? weakestModules(result.scores, 3).length : 0} recommended</strong></div>
