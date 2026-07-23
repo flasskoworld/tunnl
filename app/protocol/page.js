@@ -31,6 +31,8 @@ function ProtocolInner() {
   useEffect(() => {
     (async () => {
       const sessionId = params.get("session_id");
+      const previewingOutcome =
+        process.env.NODE_ENV === "development" && params.get("preview") === "outcome";
 
       // Freshly returned from Stripe — confirm this specific session first.
       if (sessionId) {
@@ -47,7 +49,7 @@ function ProtocolInner() {
       // so the same account unlocks on any device once signed in.
       const previewingStarter =
         process.env.NODE_ENV === "development" &&
-        (params.get("preview") === "starter" ||
+        (params.get("preview") === "starter" || previewingOutcome ||
           localStorage.getItem("tunnl-dev-starter-preview") === "true");
       if (previewingStarter) localStorage.setItem("tunnl-dev-starter-preview", "true");
       setIsPreview(previewingStarter);
@@ -104,9 +106,14 @@ function ProtocolInner() {
           const built = buildProtocol(saved.memo, combinedProfile, savedCheckpoint);
           setDays(built);
           const rawChecked = localStorage.getItem("tunnl-protocol-checked");
-          setChecked(accountData?.workspace?.protocol_checked || (rawChecked ? JSON.parse(rawChecked) : {}));
+          const savedChecked = accountData?.workspace?.protocol_checked || (rawChecked ? JSON.parse(rawChecked) : {});
+          setChecked(previewingOutcome ? { ...savedChecked, 14: true } : savedChecked);
           const rawNotes = localStorage.getItem("tunnl-protocol-notes");
           setNotes(accountData?.workspace?.protocol_notes || (rawNotes ? JSON.parse(rawNotes) : {}));
+          if (previewingOutcome) {
+            setOpenDay(14);
+            setShowFullPlan(true);
+          }
         }
       } catch (e) {}
       setStatus("ready");
