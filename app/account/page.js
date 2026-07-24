@@ -2,9 +2,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { buildProtocol, nextActionableDay, protocolProgress } from "../../lib/protocol";
-import { loadAccountWorkspace, previewWorkspaceForReading, readingForWorkspace, saveWorkspace, syncReading, track } from "../../lib/clientData";
+import { loadAccountWorkspace, previewWorkspaceForReading, readingForWorkspace, saveWorkspace, sprintSetupForReading, syncReading, track } from "../../lib/clientData";
 import { TUNNL_METHOD } from "../../lib/methodology";
-import { suggestedResultFor } from "../../lib/interventions";
 import StarterNav from "../components/StarterNav";
 
 export default function Account() {
@@ -138,28 +137,19 @@ export default function Account() {
     ? nextActionableDay(days, checked, workspace?.protocol_evidence || {})
     : null;
   const needsSetup = me.unlocked && result && workspace && !workspace.protocol_start_date;
-  const primaryPriority = result?.memo?.priorities?.[0];
-  const suggestedResult = primaryPriority
-    ? suggestedResultFor(result.profile?.business_model || "creator", primaryPriority.module)
-    : null;
-
-  const useSuggestedResult = () => {
-    if (!suggestedResult) return;
-    setSetup((current) => ({
-      ...current,
-      targetMetric: suggestedResult.metric,
-      targetValue: suggestedResult.target,
-    }));
-    window.setTimeout(() => document.getElementById("sprint-baseline")?.focus(), 0);
-  };
+  const sprintCommission = sprintSetupForReading(result);
 
   const startPlan = async (event) => {
     event.preventDefault();
-    const { startDate, ...details } = setup;
+    if (!sprintCommission) return;
+    const { startDate } = setup;
+    const { baselinePrompt, constraint, ...details } = sprintCommission;
     const sprintSetup = {
       ...details,
-      businessModel: result?.profile?.business_model,
-      successMeasure: `${details.targetMetric}: ${details.baselineValue} -> ${details.targetValue}`,
+      baselinePrompt,
+      primaryConstraint: constraint,
+      baselineValue: "",
+      successMeasure: `${details.targetMetric}. Starting point captured on Day 1. Day 14 signal: ${details.targetValue}`,
       sprintId: crypto.randomUUID(),
       readingId: result?.id,
     };
@@ -203,30 +193,29 @@ export default function Account() {
         <div style={{ padding: "26px 0 8px" }}>
           <div className="q-module">Your workspace</div>
           <h1 className="serif" style={{ fontSize: "clamp(40px, 9vw, 60px)", lineHeight: 1, marginBottom: 14 }}>
-            {needsSetup ? "Set your direction." : me.unlocked ? "Continue the work." : "Your reading is ready."}
+            {needsSetup ? "Your sprint is ready." : me.unlocked ? "Continue the work." : "Your reading is ready."}
           </h1>
           <p className="copy soft">
-            {needsSetup ? "A few details will shape the plan around your real work." : me.unlocked ? "Your Starter workspace is ready." : "Your free reading is ready."}
+            {needsSetup ? "Tunnl built this plan from your answers, current work, and strongest constraint." : me.unlocked ? "Your Starter workspace is ready." : "Your free reading is ready."}
           </p>
         </div>
 
-        {needsSetup ? (
+        {needsSetup && sprintCommission ? (
           <form className="plan-setup" onSubmit={startPlan}>
-            <div className="q-module">Set up your sprint</div>
-            <h2>Make the next 14 days specific.</h2>
-            <p>Review Tunnl&apos;s recommended focus, name the people it serves, and choose one result to compare on Day 14.</p>
-            {setup.projectBrief && <div className="target-suggestion"><strong>{setup.projectIntent || "Your work"}</strong><span>{setup.projectBrief}</span><small>Tunnl selected a focused outcome from the work you described.</small></div>}
-            <label>Recommended 14-day focus<input required value={setup.focusProject} onChange={(event) => setSetup({ ...setup, focusProject: event.target.value })} placeholder="One focused outcome for the next 14 days" /></label>
-            <label>Who is it for?<input required value={setup.audience} onChange={(event) => setSetup({ ...setup, audience: event.target.value })} placeholder="Independent designers building an audience" /></label>
-            <fieldset className="sprint-target-fields"><legend>A result to watch</legend>
-              {suggestedResult && <div className="target-suggestion"><strong>Tunnl&apos;s suggested result</strong><span>{suggestedResult.metric}</span><small>{suggestedResult.target}</small><button type="button" onClick={useSuggestedResult}>Use Tunnl&apos;s suggested result</button></div>}
-              <label>What result will you watch?<input required value={setup.targetMetric} onChange={(event) => setSetup({ ...setup, targetMetric: event.target.value })} placeholder="Weekly client inquiries" /></label>
-              <label>What is true today?<small>{suggestedResult?.baselinePrompt}</small><input id="sprint-baseline" required value={setup.baselineValue} onChange={(event) => setSetup({ ...setup, baselineValue: event.target.value })} placeholder="Usually one each week" /></label>
-              <label>What would meaningful progress look like by Day 14?<input required value={setup.targetValue} onChange={(event) => setSetup({ ...setup, targetValue: event.target.value })} placeholder="Three in one week" /></label>
-            </fieldset>
-            <label>Time available each week<select value={setup.weeklyCapacity} onChange={(event) => setSetup({ ...setup, weeklyCapacity: event.target.value })}><option>2 hours</option><option>4 hours</option><option>6 hours</option><option>8+ hours</option></select></label>
-            <label>Start date<input required type="date" value={setup.startDate} onChange={(event) => setSetup({ ...setup, startDate: event.target.value })} /></label>
-            <button className="btn" type="submit">Create my 14-Day Plan</button>
+            <div className="q-module">Your 14-Day Sprint</div>
+            <h2>A focused plan, built from your reading.</h2>
+            <p>The direction is already set. Day 1 records your honest starting point, then each move builds toward one observable result.</p>
+            {sprintCommission.projectBrief && <div className="sprint-source"><strong>{sprintCommission.projectIntent}</strong><span>{sprintCommission.projectBrief}</span></div>}
+            <dl className="sprint-commission">
+              <div><dt>Constraint to move</dt><dd>{sprintCommission.constraint}</dd></div>
+              <div><dt>14-day focus</dt><dd>{sprintCommission.focusProject}</dd></div>
+              <div><dt>Evidence to watch</dt><dd>{sprintCommission.targetMetric}</dd></div>
+              <div><dt>Day 1 starting point</dt><dd>{sprintCommission.baselinePrompt}</dd></div>
+              <div><dt>Day 14 success signal</dt><dd>{sprintCommission.targetValue}</dd></div>
+              <div><dt>Time plan</dt><dd>Built for {sprintCommission.weeklyCapacity} each week</dd></div>
+            </dl>
+            <label className="sprint-start-date">When do you want to begin?<input required type="date" value={setup.startDate} onChange={(event) => setSetup({ ...setup, startDate: event.target.value })} /></label>
+            <button className="btn" type="submit">Begin my 14-Day Plan</button>
           </form>
         ) : me.unlocked ? (
           <>

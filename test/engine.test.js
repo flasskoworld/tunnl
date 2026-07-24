@@ -17,7 +17,7 @@ import { buildProtocol, dayIsAdvanced, nextActionableDay, protocolProgress } fro
 import { courseCorrectionMode, interventionKey, METHOD_VERSION, TUNNL_METHOD } from "../lib/methodology.js";
 import { allInterventionTracks, suggestedResultFor } from "../lib/interventions.js";
 import { vaultFor } from "../lib/vault.js";
-import { previewWorkspaceForReading } from "../lib/clientData.js";
+import { previewWorkspaceForReading, sprintSetupForReading } from "../lib/clientData.js";
 import { projectBriefContext, recommendedSprintContext } from "../lib/projectBrief.js";
 
 const scoredQuestions = QUESTIONS.filter((question) => !question.context);
@@ -153,6 +153,25 @@ test("Tunnl suggests an honest result without inventing the baseline", () => {
   assert.match(suggestion.baselinePrompt, /last five inquiries/i);
   assert.match(suggestion.target, /three prospects/i);
   assert.equal(Object.hasOwn(suggestion, "baseline"), false);
+});
+
+test("the diagnostic commissions a fixed sprint setup", () => {
+  const setup = sprintSetupForReading({
+    profile: {
+      business_model: "product",
+      projectBrief: "Build a research tool for independent consultants",
+      projectIntent: "Product validation",
+      focusProject: "Test one product assumption with target users and decide what to build next.",
+      weeklyCapacity: "2 hours",
+    },
+    memo: { priorities: [{ module: "building" }] },
+  });
+  assert.equal(setup.constraint, "Building");
+  assert.equal(setup.focusProject, "Test one product assumption with target users and decide what to build next.");
+  assert.equal(setup.targetMetric, "Observable responses to a shipped release");
+  assert.match(setup.baselinePrompt, /finished product changes/i);
+  assert.equal(setup.weeklyCapacity, "2 hours");
+  assert.equal(Object.hasOwn(setup, "baselineValue"), false);
 });
 
 test("model-specific tracks remove cross-model action mismatches", () => {
