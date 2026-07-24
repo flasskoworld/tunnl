@@ -223,9 +223,22 @@ export default function Memo() {
             <p className="starter-lede">
               Turn this reading into a focused 14-day sequence built around your three priority constraints and your stated destination.
             </p>
-            <div className="starter-preview">
-              <div className="starter-preview-label">Your first three days</div>
-              {starterPreview.map((day) => <div className="starter-preview-day" key={day.day}><span>{String(day.day).padStart(2, "0")}</span><div><strong>{day.title}</strong><p>{day.detail}</p><em>{day.minutes} minutes</em></div></div>)}
+            <div className="starter-preview" id="starter-preview">
+              <div className="starter-preview-label">Your first three days, generated from this reading</div>
+              {starterPreview.map((day) => (
+                <div className="starter-preview-day" key={day.day}>
+                  <span>{String(day.day).padStart(2, "0")}</span>
+                  <div>
+                    <strong>{day.title}</strong>
+                    <p>{day.detail}</p>
+                    <small>
+                      <b>{day.day === 1 ? "Your starting question" : "You’re done when"}</b>
+                      {day.day === 1 ? day.startingPointPrompt : day.doneWhen}
+                    </small>
+                    <em>{day.minutes} minutes</em>
+                  </div>
+                </div>
+              ))}
             </div>
             <div className="starter-outcomes">
               <div><span>01</span><strong>Your 14-Day Plan</strong><p>One focused move per day, shaped around your three priority constraints.</p></div>

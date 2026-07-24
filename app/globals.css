@@ -438,6 +438,8 @@ h2.question {
 .starter-preview-day > span { font-family: var(--serif); font-size: 19px; opacity: 0.6; }
 .starter-preview-day strong { display: block; font-family: var(--serif); font-size: 17px; font-weight: 400; margin-bottom: 4px; }
 .starter-preview-day p { font-size: 10px; line-height: 1.55; opacity: 0.7; }
+.starter-preview-day small { border-left: 1px solid rgba(251, 249, 243, 0.45); display: block; font-size: 9px; line-height: 1.55; margin-top: 9px; opacity: 0.78; padding-left: 9px; }
+.starter-preview-day small b { display: block; font-size: 7px; font-weight: 400; letter-spacing: 0.12em; margin-bottom: 3px; text-transform: uppercase; }
 .starter-preview-day em { display: block; font-size: 8px; font-style: normal; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; margin-top: 5px; }
 .diagnostic-back { border: 0; background: transparent; color: var(--ink-soft); cursor: pointer; font-family: var(--mono); font-size: 10px; margin-top: 16px; padding: 6px 0; }
 .option.selected { background: var(--ink-wash); }
