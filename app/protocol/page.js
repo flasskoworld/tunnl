@@ -123,6 +123,11 @@ function ProtocolInner() {
   const toggle = async (day) => {
     if (day === 14) return;
     const planDay = days.find((item) => item.day === day);
+    if (planDay?.type === "kickoff" && !evidence[day]?.output?.trim()) {
+      setOpenDay(day);
+      setCompletionMessage({ [day]: "Record your starting point before completing Day 1." });
+      return;
+    }
     if (planDay?.type === "action" && (!evidence[day]?.output?.trim() || !evidence[day]?.signal)) {
       setOpenDay(day);
       setCompletionMessage({ [day]: "Add what you produced and choose an outcome signal first." });
@@ -409,6 +414,39 @@ function ProtocolInner() {
                       <span>You&apos;re done when</span>
                       <p>{d.doneWhen}</p>
                     </section>
+                    {d.type === "kickoff" && (
+                      <section className="starting-point-capture">
+                        <div className="q-module">Required · Your starting point</div>
+                        <p className="starting-point-prompt">{d.startingPointPrompt}</p>
+                        {d.startingPointSuggestion && <button type="button" className="starting-point-suggestion" onClick={() => {
+                          const next = {
+                            ...evidence,
+                            [d.day]: {
+                              ...(evidence[d.day] || {}),
+                              output: d.startingPointSuggestion,
+                              type: "metric",
+                              module: d.module,
+                              interventionId: d.interventionId,
+                              methodVersion: d.methodVersion,
+                            },
+                          };
+                          setEvidence(next);
+                          persistEvidence(next, d.day);
+                        }}>Use the starting value from setup: <strong>{d.startingPointSuggestion}</strong></button>}
+                        <label>
+                          What is true today?
+                          <textarea
+                            required
+                            rows={3}
+                            value={evidence[d.day]?.output || ""}
+                            onChange={(event) => updateEvidence(d.day, "output", event.target.value)}
+                            onBlur={() => persistEvidence(evidence, d.day)}
+                            placeholder="Use one number, recent result, or observable fact."
+                          />
+                        </label>
+                        <p className="evidence-help">This becomes the “before” in your Sprint Report.</p>
+                      </section>
+                    )}
                     {d.sprintFocus && <div className="day-focus"><span>{d.projectIntent ? `${d.projectIntent} · Commissioned for` : "Sprint focus"}</span><p>{d.sprintFocus}</p>{d.commission && <small>{d.commission}</small>}</div>}
                     <details className="day-context">
                       <summary>Why this move</summary>

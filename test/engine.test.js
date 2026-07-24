@@ -67,8 +67,11 @@ test("the Plan contains 14 sequenced, personalized days", () => {
   assert.doesNotMatch(JSON.stringify(days), /Sprint Target|movement means|Paid customers starts at/);
   assert.match(days.at(-1).doneWhen, /strongest result/);
   assert.ok(days.filter((day) => day.type === "action").every((day) => day.sprintFocus === "a paid design workshop"));
-  assert.equal(days[0].title, "Create your one-line Sprint Brief");
-  assert.match(days[0].detail, /For the next 14 days/);
+  assert.equal(days[0].title, "Mark your starting point");
+  assert.equal(days[0].minutes, 5);
+  assert.match(days[0].detail, /Strategy/);
+  assert.match(days[0].startingPointPrompt, /responses/i);
+  assert.equal(days[0].startingPointSuggestion, "Paid customers: 0");
   assert.ok(days.filter((day) => day.type === "action").every((day) => !day.title.includes(" - ")));
 });
 
