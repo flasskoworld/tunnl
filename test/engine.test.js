@@ -102,12 +102,12 @@ test("a new diagnostic gets a clean dev preview workspace", () => {
   assert.equal(next.setup.readingId, "new-reading");
   assert.equal(next.setup.projectBrief, "Build a client research repository");
   assert.equal(next.setup.projectIntent, "Product validation");
-  assert.equal(next.setup.focusProject, "Test one product assumption with target users and decide what to build next.");
+  assert.match(next.setup.focusProject, /one product question/i);
   assert.deepEqual(next.protocol_checked, {});
   assert.deepEqual(next.protocol_evidence, {});
 });
 
-test("Tunnl derives a category-level sprint instead of echoing the project brief", () => {
+test("Tunnl derives the sprint from model and constraint without echoing the project brief", () => {
   const service = recommendedSprintContext("providing AI services for others", {
     model: "service",
     primaryModule: "strategy",
@@ -117,11 +117,34 @@ test("Tunnl derives a category-level sprint instead of echoing the project brief
     primaryModule: "network",
   });
   assert.equal(service.category, "Offer and revenue");
-  assert.equal(service.focus, "Validate one service offer for one best-fit buyer and create a real buying signal.");
+  assert.match(service.focus, /narrower service promise/i);
   assert.notEqual(service.focus.toLowerCase(), service.brief.toLowerCase());
   assert.equal(community.category, "Audience and participation");
-  assert.match(community.focus, /participation loop/i);
+  assert.match(community.focus, /member-to-member value loop/i);
   assert.notEqual(service.focus, community.focus);
+});
+
+test("the same project brief produces distinct constraint pathways", () => {
+  const brief = "Grow a creator audience with more consistent content";
+  const economy = recommendedSprintContext(brief, { model: "creator", primaryModule: "economy" });
+  const network = recommendedSprintContext(brief, { model: "creator", primaryModule: "network" });
+  const systems = recommendedSprintContext(brief, { model: "creator", primaryModule: "systems" });
+  assert.match(economy.focus, /offer.*proven audience demand/i);
+  assert.match(network.focus, /sharing reason/i);
+  assert.match(systems.focus, /publishing rhythm/i);
+  assert.equal(new Set([economy.focus, network.focus, systems.focus]).size, 3);
+});
+
+test("all 36 model and constraint combinations have distinct sprint focuses", () => {
+  const models = ["creator", "service", "community", "product"];
+  const focuses = models.flatMap((model) => MODULES.map(({ key }) =>
+    recommendedSprintContext("Grow an audience with more consistent content", {
+      model,
+      primaryModule: key,
+    }).focus
+  ));
+  assert.equal(focuses.length, 36);
+  assert.equal(new Set(focuses).size, 36);
 });
 
 test("an existing dev preview migrates a legacy raw focus without erasing its work", () => {
@@ -135,7 +158,7 @@ test("an existing dev preview migrates a legacy raw focus without erasing its wo
     memo: { priorities: [{ module: "strategy" }] },
   });
   assert.equal(next.setup.projectBrief, "providing AI services for others");
-  assert.equal(next.setup.focusProject, "Validate one service offer for one best-fit buyer and create a real buying signal.");
+  assert.match(next.setup.focusProject, /narrower service promise/i);
   assert.deepEqual(next.protocol_checked, { 1: true });
 });
 
@@ -167,7 +190,7 @@ test("the diagnostic commissions a fixed sprint setup", () => {
     memo: { priorities: [{ module: "building" }] },
   });
   assert.equal(setup.constraint, "Building");
-  assert.equal(setup.focusProject, "Test one product assumption with target users and decide what to build next.");
+  assert.match(setup.focusProject, /smaller instrumented release/i);
   assert.equal(setup.targetMetric, "Observable responses to a shipped release");
   assert.match(setup.baselinePrompt, /finished product changes/i);
   assert.equal(setup.weeklyCapacity, "2 hours");
