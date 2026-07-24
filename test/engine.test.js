@@ -117,7 +117,7 @@ test("Tunnl derives the sprint from model and constraint without echoing the pro
     primaryModule: "network",
   });
   assert.equal(service.category, "Offer and revenue");
-  assert.match(service.focus, /narrower service promise/i);
+  assert.match(service.focus, /narrow one service promise/i);
   assert.notEqual(service.focus.toLowerCase(), service.brief.toLowerCase());
   assert.equal(community.category, "Audience and participation");
   assert.match(community.focus, /member-to-member value loop/i);
@@ -129,8 +129,8 @@ test("the same project brief produces distinct constraint pathways", () => {
   const economy = recommendedSprintContext(brief, { model: "creator", primaryModule: "economy" });
   const network = recommendedSprintContext(brief, { model: "creator", primaryModule: "network" });
   const systems = recommendedSprintContext(brief, { model: "creator", primaryModule: "systems" });
-  assert.match(economy.focus, /offer.*proven audience demand/i);
-  assert.match(network.focus, /sharing reason/i);
+  assert.match(economy.focus, /proven audience demand.*one offer/i);
+  assert.match(network.focus, /reason to share/i);
   assert.match(systems.focus, /publishing rhythm/i);
   assert.equal(new Set([economy.focus, network.focus, systems.focus]).size, 3);
 });
@@ -158,7 +158,7 @@ test("an existing dev preview migrates a legacy raw focus without erasing its wo
     memo: { priorities: [{ module: "strategy" }] },
   });
   assert.equal(next.setup.projectBrief, "providing AI services for others");
-  assert.match(next.setup.focusProject, /narrower service promise/i);
+  assert.match(next.setup.focusProject, /narrow one service promise/i);
   assert.deepEqual(next.protocol_checked, { 1: true });
 });
 
@@ -190,7 +190,7 @@ test("the diagnostic commissions a fixed sprint setup", () => {
     memo: { priorities: [{ module: "building" }] },
   });
   assert.equal(setup.constraint, "Building");
-  assert.match(setup.focusProject, /smaller instrumented release/i);
+  assert.match(setup.focusProject, /small instrumented release/i);
   assert.equal(setup.targetMetric, "Observable responses to a shipped release");
   assert.match(setup.baselinePrompt, /finished product changes/i);
   assert.equal(setup.weeklyCapacity, "2 hours");
